@@ -4,7 +4,7 @@ import os
 import sys
 from glob import glob
 
-BASE_PATH = '/home/pedrofrancescon/Desktop/TCC/container'
+BASE_PATH = '/home/pedrofrancescon/Desktop/TCC/backend/container'
 BIN_PATH = os.path.join(BASE_PATH, 'bin')
 
 os.environ['PYTHONPATH'] = os.path.join(BASE_PATH, 'MedicalDataAugmentationTool')
