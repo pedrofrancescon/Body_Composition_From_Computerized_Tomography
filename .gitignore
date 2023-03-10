@@ -1,3 +1,4 @@
 .DS_Store
 backend/container/data/*
 !backend/container/data/.gitkeep 
+__pycache__*
