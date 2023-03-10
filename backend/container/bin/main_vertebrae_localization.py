@@ -133,7 +133,7 @@ class MainLoop(MainLoopBase):
 
     def save_landmarks_verse_json(self, landmarks, filename):
         verse_landmarks_list = []
-        # verse_landmarks_list.append({"direction": ["P","I","R"]})
+        verse_landmarks_list.append({"direction": ["L","A","S"]})
         for i, landmark in enumerate(landmarks):
             if landmark.is_valid:
                 verse_landmarks_list.append({'label': self.landmark_mapping[i],
