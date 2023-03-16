@@ -20,10 +20,11 @@ def main():
 
     all_image_folders = [os.path.split(path)[-1] for path in glob(os.path.join(base_image_folder, '*')) if os.path.isdir(path) and path != base_output_folder]
     for current_image_folder in sorted(all_image_folders):
-        print('Processing folder ', current_image_folder)
 
         if current_image_folder == 'tmp' or current_image_folder == 'results':
             continue
+        
+        print('Processing folder ', current_image_folder)
     
         image_folder = os.path.join(base_image_folder, current_image_folder)
         output_folder = os.path.join(base_output_folder, current_image_folder)
@@ -35,6 +36,9 @@ def main():
         vertebrae_localization_folder = os.path.join(intermediate_folder, 'vertebrae_localization')
         vertebrae_localization_model = os.path.join(models_folder, 'vertebrae_localization')
         vertebrae_segmentation_folder = os.path.join(intermediate_folder, 'vertebrae_segmentation')
+
+        ## TODO: When optimizing code, we dont need to save and load right after preprocessing
+        ## -> we can directly pass the itk object without the overhead of saving/loading a file 
 
         if 'preprocessing' in pipeline or 'all' in pipeline:
             subprocess.run(['python', os.path.join(BIN_PATH, 'preprocess.py'),

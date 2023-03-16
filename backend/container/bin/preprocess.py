@@ -54,7 +54,7 @@ def clamp(image):
     return clamped
 
 
-def process_image(filename, output_folder, sigma):
+def process_image_nifti(filename, output_folder, sigma):
     """
     Reorient image at filename, smooth with sigma, clamp and save to output_folder.
     :param filename: The image filename.
@@ -63,7 +63,6 @@ def process_image(filename, output_folder, sigma):
     """
     basename = os.path.basename(filename)
     basename_wo_ext = basename[:basename.find('.nii.gz')]
-    print(basename_wo_ext)
     ImageType = itk.Image[itk.SS, 3]
     reader = itk.ImageFileReader[ImageType].New()
     reader.SetFileName(filename)
@@ -76,7 +75,39 @@ def process_image(filename, output_folder, sigma):
     m = itk.GetMatrixFromArray(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], np.float64))
     reoriented.SetDirection(m)
     reoriented.Update()
-    itk.imwrite(reoriented, os.path.join(output_folder, basename_wo_ext + '.nii.gz'))
+    filename = os.path.join(output_folder, basename_wo_ext + '.nii.gz') 
+    itk.imwrite(reoriented, filename)
+
+def process_image_dicom(folder, output_folder, sigma):
+    """
+    Reorient image at filename, smooth with sigma, clamp and save to output_folder.
+    :param filename: The image filename.
+    :param output_folder: The output folder.
+    :param sigma: Sigma for smoothing.
+    """
+    
+    ImageType = itk.Image[itk.SS, 3]
+    reader = itk.ImageSeriesReader[ImageType].New()
+    namesGenerator = itk.GDCMSeriesFileNames.New()
+    namesGenerator.SetUseSeriesDetails(True)
+    # namesGenerator.SetGlobalWarningDisplay(False)
+    namesGenerator.SetDirectory(folder)
+    seriesUID = namesGenerator.GetSeriesUIDs()
+    fileNames = namesGenerator.GetFileNames(seriesUID[0])
+    # dicomIO = itk.GDCMImageIO.New()
+    # reader.SetImageIO(dicomIO)
+    reader.SetFileNames(fileNames)
+    # reader.ForceOrthogonalDirectionOff()
+    image = reader.GetOutput()
+    reoriented = reorient_to_rai(image)
+    reoriented = smooth(reoriented, sigma)
+    reoriented = clamp(reoriented)
+    reoriented.SetOrigin([0, 0, 0])
+    m = itk.GetMatrixFromArray(np.array([[1, 0, 0], [0, 1, 0], [0, 0, 1]], np.float64))
+    reoriented.SetDirection(m)
+    reoriented.Update()
+    filename = os.path.join(output_folder, os.path.basename(folder) + '.nii.gz') 
+    itk.imwrite(reoriented, filename)
 
 
 if __name__ == '__main__':
@@ -88,7 +119,13 @@ if __name__ == '__main__':
     
     if not os.path.exists(parser_args.output_folder):
         os.makedirs(parser_args.output_folder)
-    
-    filenames = glob(os.path.join(parser_args.image_folder, '*.nii.gz'))
+
     pool = multiprocessing.Pool(8)
-    pool.starmap(process_image, [(filename, parser_args.output_folder, parser_args.sigma) for filename in sorted(filenames)])
+
+    ## For NIFTI files
+    filenames = glob(os.path.join(parser_args.image_folder, '*.nii.gz'))
+    if (len(filenames)):
+        pool.starmap(process_image_nifti, [(filename, parser_args.output_folder, parser_args.sigma) for filename in sorted(filenames)])
+    else:
+        ## For DICOM files
+        pool.starmap(process_image_dicom, [(parser_args.image_folder, parser_args.output_folder, parser_args.sigma)])
