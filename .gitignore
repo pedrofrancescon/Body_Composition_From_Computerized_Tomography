@@ -2,3 +2,4 @@
 backend/container/data/*
 !backend/container/data/.gitkeep 
 __pycache__*
+backend/tmp
