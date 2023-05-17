@@ -1,13 +1,15 @@
-from copy import deepcopy
 import tkinter as tk
 from tkinter.messagebox import showinfo
 import tkinter.ttk as ttk
 from tkinter.filedialog import askdirectory, askopenfilename
 
 paddings = {'padx': 5, 'pady': 5}
-entry_font = {'font': ('Helvetica', 11)}
+entry_font = {'font': ('Helvetica', 12)}
+description = "Selecione pastas contendo arquivos DICOM de exames tomográficos para determinação automatica da composição corporal dos pacientes"
+bodies = {}
+proc_bodies = {}
 
-#### Nav
+#### Navigation
 def show_page(page_number):
     global current_page
     current_page.pack_forget()
@@ -19,130 +21,159 @@ app = tk.Tk()
 app.title('Composição Corporal')
 app.geometry('1200x900')
 app.configure(bg='white')
-
+txt_save_path = tk.StringVar()
+####################
 
 #### frame tela boas vindas
-home = tk.Frame(app)
-home.configure(bg='white')
-# label
-home_label = ttk.Label(home, text='Composição Corporal')
-home_label.pack()
-# button
-home_button = ttk.Button(home, text='Iniciar', command=lambda: show_page(1), padding={'padx': 5, 'pady': 5})
-home_button.pack()
+def createHomeFrame():
+  home = tk.Frame(app)
+  home.configure(bg='white')
+  lbl_home = ttk.Label(home, text='Composição Corporal', background='white',**entry_font)
+  lbl_home.pack()
+  lbl_description = ttk.Label(home, text=description, background='white', padding={'padx': 5, 'pady': 5}, **entry_font)
+  lbl_description.pack()
+  btn_home = ttk.Button(home, text='Iniciar', command=lambda: show_page(1), padding={'padx': 5, 'pady': 5})
+  btn_home.pack()
+  return home
+########################
 
-
-
-#### frame escolha de diretorios
-pathSelectionScreen = tk.Frame(app)
-pathSelectionScreen.configure(bg='white')
-pathSelectionScreen.rowconfigure(0, weight=1)
-pathSelectionScreen.rowconfigure(1, minsize=400, weight=1)
-pathSelectionScreen.rowconfigure(2, weight=1)
-pathSelectionScreen.columnconfigure(0, minsize=600, weight=1)
-
-bodies = {}
-
-## handlers 
-
-def open_file():
-  folderpath = askdirectory()
-  if not folderpath:
-      return
-  ent_save_path.delete(0, tk.END)
-  ent_save_path.insert(0, folderpath)
-
-def delete_body_row(filepath):
-  bodies[filepath].pack_forget()
-  bodies[filepath].destroy()
-  del bodies[filepath]
-
-def add_body_row():
-  filepath = askopenfilename(filetypes=[("All Files", "*.*")])
-  
-  if not filepath:
-      return
-  
-  frm_body_row = tk.Frame(frm_body, relief=tk.SUNKEN, bg='white', border=1,**paddings)
+def createPathsRowFrame(master, filepath):
+  frm_body_row = tk.Frame(master, relief=tk.SUNKEN, bg='white', border=1,**paddings)
   lbl_file_path = tk.Label(frm_body_row, text=filepath, bg='white', **paddings)
   btn_remove_body = tk.Button(frm_body_row, text='x', background='red', foreground='white', command= lambda: delete_body_row(filepath), **paddings)
-
   bodies[filepath] = frm_body_row
-
   lbl_file_path.pack(side=tk.LEFT)
   btn_remove_body.pack(side=tk.RIGHT)
   frm_body_row.pack(fill=tk.X)
 
+def createProcsRowFrame(master, filepath):
+  #add to processing frame
+  frm_proc_body_row = tk.Frame(master, relief=tk.SUNKEN, bg='white', border=1,**paddings)
+  lbl_proc_file_path = tk.Label(frm_proc_body_row,frm_proc_body_row, text=filepath, bg='white', **paddings)
+  lbl_proc_status = tk.Label(frm_proc_body_row, text="ongoing", bg='white', **paddings)
+  proc_bodies[filepath] = frm_proc_body_row
+  lbl_proc_file_path.pack(side=tk.LEFT)
+  lbl_proc_status.pack(side=tk.RIGHT)
+  frm_proc_body_row.pack(fill=tk.X)
 
-      ## widgets creation
+## handlers 
+def open_file(entry):
+  folderpath = askopenfilename(filetypes=[("All Files", "*.*")]) #askdirectory()
+  if not folderpath:
+      return
+  entry.delete(0, tk.END)
+  entry.insert(0, folderpath)
+  
+def delete_body_row(filepath):
+  bodies[filepath].pack_forget()
+  bodies[filepath].destroy()
+  del bodies[filepath]
+  #proc_bodies[filepath].pack_forget()
+  #proc_bodies[filepath].destroy()
+  #del proc_bodies[filepath]
 
-frm_header = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
-lbl_save_path = tk.Label(frm_header, text='Save path:', background='white', foreground='black', **paddings, **entry_font)
-ent_save_path = tk.Entry(frm_header, width=50, background='white', foreground='black', **entry_font)
-btn_save_path = tk.Button(frm_header, text='Open', height=1, command=open_file, background='white', foreground='black', **paddings, **entry_font)
-btn_add_body = tk.Button(frm_header, text='+', background='green', foreground='white', command=add_body_row, **paddings, **entry_font)
+def add_body_row(bodyframe):
+  filepath = askdirectory() #askopenfilename(filetypes=[("All Files", "*.*")])  
+  print(filepath)
+  if not filepath:
+      return
+  #add to pathselection frame
+  createPathsRowFrame(bodyframe,filepath)
 
-frm_body = tk.Frame(pathSelectionScreen, bg='white')
+#### frame escolha de diretorios
+def createPathsSelectionFrame():
+  pathSelectionScreen = tk.Frame(app)
+  pathSelectionScreen.configure(bg='white')
+  pathSelectionScreen.rowconfigure(0, weight=1)
+  pathSelectionScreen.rowconfigure(1, minsize=400, weight=1)
+  pathSelectionScreen.rowconfigure(2, weight=1)
+  pathSelectionScreen.columnconfigure(0, minsize=600, weight=1)
 
-frm_footer = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
-btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: show_page(2), background='green', foreground='white', **entry_font, **paddings)
+  
+  ## widgets creation
+  frm_body = tk.Frame(pathSelectionScreen, bg='white')
+  frm_header = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
+  lbl_save_path = tk.Label(frm_header, text='Save path:', background='white', foreground='black', **paddings, **entry_font)
+  ent_save_path = tk.Entry(frm_header, textvariable=txt_save_path, width=50, background='white', foreground='black', **entry_font)
+  btn_save_path = tk.Button(frm_header, text='Open', height=1, command=lambda:open_file(ent_save_path), background='white', foreground='black', **paddings, **entry_font)
+  btn_add_body = tk.Button(frm_header, text='+', background='green', foreground='white', command=lambda:add_body_row(frm_body), **paddings, **entry_font)
 
-## widgets placement
+  frm_footer = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
+  btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: show_page(2), background='green', foreground='white', **entry_font, **paddings)
+  
+  ## widgets placement
+  lbl_save_path.pack(side=tk.LEFT)
+  ent_save_path.pack(side=tk.LEFT, padx=5)
+  btn_save_path.pack(side=tk.LEFT)
+  btn_add_body.pack(side=tk.RIGHT)
 
-lbl_save_path.pack(side=tk.LEFT)
-ent_save_path.pack(side=tk.LEFT, padx=5)
-btn_save_path.pack(side=tk.LEFT)
-btn_add_body.pack(side=tk.RIGHT)
+  btn_run.pack()
 
-btn_run.pack()
+  frm_header.grid(row=0, column=0, sticky='ew')
+  frm_body.grid(row=1, column=0, sticky='nsew')
+  frm_footer.grid(row=2, column=0, sticky='ew')
 
-frm_header.grid(row=0, column=0, sticky='ew')
-frm_body.grid(row=1, column=0, sticky='nsew')
-frm_footer.grid(row=2, column=0, sticky='ew')
-## end
+  return pathSelectionScreen
+  ######################
 
 #### frame processamento
-processingScreen = tk.Frame(app)
+def createProcessingFrame():
+  processingScreen = tk.Frame(app)
+  frm_proc_body = tk.Frame(processingScreen, bg='white')
 
-frm_body_row2 = tk.Frame(frm_body, relief=tk.SUNKEN, bg='white', border=1,**paddings)
-lbl_file_path2 = tk.Label(frm_body_row2, text="paciente", bg='white', **paddings)
-lbl_status_proc = tk.Button(frm_body_row2, text='x', background='red', foreground='white', command= lambda: delete_body_row(filepath), **paddings)
+  frm_proc_header = tk.Frame(processingScreen, relief=tk.RAISED, bg='white')
+  lbl_proc_save_path = tk.Label(frm_proc_header, text='Save path:', background='white', foreground='black', **paddings, **entry_font)
+  lbl_proc_saved_path = tk.Label(frm_proc_header, textvariable=txt_save_path, background='white', foreground='black', **paddings, **entry_font)
+  lbl_info_body = tk.Label(frm_proc_header, text='Info', background='white', foreground='black', **paddings, **entry_font)
+  lbl_proc_status = tk.Label(frm_proc_header, text='Status', background='white', foreground='black', **paddings, **entry_font)
 
+  frm_proc_footer = tk.Frame(processingScreen, relief=tk.RAISED, bg='white')
+  btn_proc_res = tk.Button(frm_proc_footer, text='Visualizar', width=6, height=3, command=lambda: show_page(3), background='green', foreground='white', **entry_font, **paddings)
 
-lbl_file_path2.pack(side=tk.LEFT)
-lbl_status_proc.pack(side=tk.RIGHT)
-frm_body_row2.pack(fill=tk.X)
+  print(f'createProcFram {bodies}')
+  for filep in bodies:
+      print(filep)
+      createProcsRowFrame(frm_proc_body, filep)
 
-frm_header2 = tk.Frame(processingScreen, relief=tk.RAISED, bg='white')
-lbl_save_path2 = tk.Label(frm_header2, text='Save path:', background='white', foreground='black', **paddings, **entry_font)
-lbl_saved_path2 = tk.Label(frm_header2, text='Save path:', background='white', foreground='black', **paddings, **entry_font)
-btn_save_path2 = tk.Button(frm_header2, text='Open', height=1, command=open_file, background='white', foreground='black', **paddings, **entry_font)
-btn_add_body2 = tk.Button(frm_header2, text='+', background='green', foreground='white', command=add_body_row, **paddings, **entry_font)
+  lbl_proc_save_path.pack(side=tk.LEFT)
+  lbl_proc_saved_path.pack(side=tk.LEFT, padx=5)
+  lbl_info_body.pack(side=tk.LEFT)
+  lbl_proc_status.pack(side=tk.RIGHT)
 
-frm_body2 = tk.Frame(processingScreen, bg='white')
+  btn_proc_res.pack()
 
-frm_footer2 = tk.Frame(processingScreen, relief=tk.RAISED, bg='white')
-btn_run2 = tk.Button(frm_footer2, text='Run', width=6, height=3, command=lambda: show_page(3), background='green', foreground='white', **entry_font, **paddings)
-
-lbl_save_path2.pack(side=tk.LEFT)
-lbl_saved_path2.pack(side=tk.LEFT, padx=5)
-btn_save_path2.pack(side=tk.LEFT)
-btn_add_body2.pack(side=tk.RIGHT)
-
-btn_run2.pack()
-
-frm_header2.grid(row=0, column=0, sticky='ew')
-frm_body2.grid(row=1, column=0, sticky='nsew')
-frm_footer2.grid(row=2, column=0, sticky='ew')
+  frm_proc_header.grid(row=0, column=0, sticky='ew')
+  frm_proc_body.grid(row=1, column=0, sticky='nsew')
+  frm_proc_footer.grid(row=2, column=0, sticky='ew')
+  return processingScreen
+####################
 
 #### frame resultados
-resultsScreen = tk.Frame(app)
-lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
-lbl_result.pack()
+def createResultFrame():
+  resultsScreen = tk.Frame(app, background='white')
+  lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
+  lbl_result.pack()
+  photo = tk.PhotoImage(file='./wdw_hbone/4899.png')
+  image_label = ttk.Label(
+      resultsScreen,
+      background='white',
+      image=photo,
+      padding=5
+  )
+  image_label.pack()
+  return resultsScreen
+####################
 
-# Dicionário para mapear as páginas
+#creating frames
+home = createHomeFrame()
+pathSelectionScreen = createPathsSelectionFrame()
+processingScreen = createProcessingFrame()
+resultsScreen = createResultFrame()
+
+#### Dicionário para mapear as páginas
 pages = {0: home, 1: pathSelectionScreen, 2: processingScreen, 3: resultsScreen}
 current_page = home
 current_page.pack()
+####################
 
 app.mainloop()
