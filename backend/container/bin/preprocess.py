@@ -4,7 +4,6 @@ import os
 import numpy as np
 import itk
 
-
 def reorient_to_rai(image):
     """
     Reorient image to RAI orientation.
@@ -64,13 +63,20 @@ def load_dicom(folder_path):
     reader = itk.ImageSeriesReader[ImageType].New()
     namesGenerator = itk.GDCMSeriesFileNames.New()
     namesGenerator.SetUseSeriesDetails(True)
-    # namesGenerator.SetGlobalWarningDisplay(False)
+    namesGenerator.SetGlobalWarningDisplay(False)
+    namesGenerator.SetRecursive(True)
     namesGenerator.SetDirectory(folder_path)
     seriesUID = namesGenerator.GetSeriesUIDs()
-    fileNames = namesGenerator.GetFileNames(seriesUID[0]) ## CHOOSE DEFAULT CRITERIA FOR FILES SELECTION HERE
+    maxSlices = 0
+    for uid in seriesUID:
+        filenames = namesGenerator.GetFileNames(uid)
+        # TODO: implement finer more robust method for determining the best series
+        if len(filenames) > maxSlices: 
+            maxSlices = len(filenames)
+            largest_series = filenames
     # dicomIO = itk.GDCMImageIO.New()
     # reader.SetImageIO(dicomIO)
-    reader.SetFileNames(fileNames)
+    reader.SetFileNames(largest_series)
     # reader.ForceOrthogonalDirectionOff()
     image = reader.GetOutput()
     image.Update()
@@ -108,16 +114,15 @@ def preprocess_from_path(path, sigma):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_path', type=str, required=True)
-    parser.add_argument('--output_folder', type=str, required=True)
-    parser.add_argument('--sigma', type=float, required=True)
+    parser.add_argument('--image_folder', type=str, required=False)
+    parser.add_argument('--output_folder', type=str, required=False)
     parser_args = parser.parse_args()
     
     if not os.path.exists(parser_args.output_folder):
         os.makedirs(parser_args.output_folder)
 
-    image, basename = load_from_path(parser_args.image_path)
-    preprocessed = preprocess(image, parser_args.sigma)
+    image, basename = load_from_path(parser_args.image_folder)
+    preprocessed = preprocess(image, 0.75)
 
-    filename = os.path.join(parser_args.output_folder, basename + '.nii.gz') 
+    filename = os.path.join(parser_args.output_folder, basename + '.nii.gz')
     itk.imwrite(preprocessed, filename)
