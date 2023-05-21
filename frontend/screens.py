@@ -101,13 +101,14 @@ def results(app):
   resultsScreen = tk.Frame(app, background='white')
   lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
   lbl_result.pack()
-  photo = tk.PhotoImage(file='./wdw_hbone/4899.png')
+  photo = tk.PhotoImage(file='./wdw_hbone/97097.png')
   image_label = ttk.Label(
       resultsScreen,
       background='white',
       image=photo,
-      padding=5
+      padding=5,
   )
+  image_label.image = photo
   image_label.pack()
   resultsScreen.pack()
 
