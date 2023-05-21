@@ -84,14 +84,11 @@ def load_dicom(folder_path):
 
 def load_from_path(path):
     if os.path.isfile(path) and path.endswith('.nii.gz'):
-        basename = os.path.basename(path)
-        basename = basename[:basename.find('.nii.gz')]
         image = load_nifti(path)
-        return image, basename
+        return image
     elif os.path.isdir(path):
-        basename = os.path.basename(path)
         image = load_dicom(path)
-        return image, basename
+        return image
     else:
         raise Exception(f'Unable to process path "{path}"')
 
@@ -114,15 +111,16 @@ def preprocess_from_path(path, sigma):
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_folder', type=str, required=False)
-    parser.add_argument('--output_folder', type=str, required=False)
+    parser.add_argument('--image_folder', type=str, required=True)
+    parser.add_argument('--output_folder', type=str, required=True)
+    parser.add_argument('--basename', type=str, required=True)
     parser_args = parser.parse_args()
     
     if not os.path.exists(parser_args.output_folder):
         os.makedirs(parser_args.output_folder)
 
-    image, basename = load_from_path(parser_args.image_folder)
+    image = load_from_path(parser_args.image_folder)
     preprocessed = preprocess(image, 0.75)
 
-    filename = os.path.join(parser_args.output_folder, basename + '.nii.gz')
+    filename = os.path.join(parser_args.output_folder, parser_args.basename + '.nii.gz')
     itk.imwrite(preprocessed, filename)

@@ -16,10 +16,12 @@ class PayerPreprocessing(InferenceClass):
         
         preprocessed_image_folder = os.path.join(inference_pipeline.payer_tmp_folder, 'data_preprocessed')
         inference_pipeline.preprocessed_image_folder = preprocessed_image_folder
+        inference_pipeline.basename = os.path.basename(self.dicom_folder)
 
         subprocess.run(['python', os.path.join(inference_pipeline.payer_bin_files, 'preprocess.py'),
                         '--image_folder', self.dicom_folder,
-                        '--output_folder', preprocessed_image_folder])
+                        '--output_folder', preprocessed_image_folder,
+                        '--basename', inference_pipeline.basename])
         
         return {}
     
