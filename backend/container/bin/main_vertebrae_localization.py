@@ -9,6 +9,10 @@ from collections import OrderedDict
 from copy import deepcopy
 from glob import glob
 
+# NOTE: this is a workaround for running this file outside of the Docker container 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(SCRIPT_DIR, 'MedicalDataAugmentationTool'))
+
 import numpy as np
 import tensorflow as tf
 import utils.io.image
@@ -61,7 +65,7 @@ class MainLoop(MainLoopBase):
             self.network = Unet
 
         self.evaluate_landmarks_postprocessing = True
-        self.save_output_images = True
+        self.save_output_images = False
         self.save_debug_images = False
         self.image_folder = config.image_folder
         self.setup_folder = config.setup_folder
@@ -228,9 +232,9 @@ class MainLoop(MainLoopBase):
                                      min_max_value=0.05,
                                      smoothing_sigma=2.0)
 
-        with open('possible_successors.pickle', 'rb') as f:
+        with open(os.path.join(SCRIPT_DIR, 'possible_successors.pickle'), 'rb') as f:
             possible_successors = pickle.load(f)
-        with open('units_distances.pickle', 'rb') as f:
+        with open(os.path.join(SCRIPT_DIR, 'units_distances.pickle'), 'rb') as f:
             offsets_mean, distances_mean, distances_std = pickle.load(f)
         spine_postprocessing = SpinePostprocessingGraph(num_landmarks=self.num_landmarks,
                                                         possible_successors=possible_successors,
