@@ -22,14 +22,32 @@ class PayerPreprocessing(InferenceClass):
                         '--output_folder', preprocessed_image_folder])
         
         return {}
+    
+class PayerSpineLocalization(InferenceClass):
+    def __init__(self):
+        super().__init__()
+
+    def __call__(self, inference_pipeline):
+        
+        spine_localization_folder = os.path.join(inference_pipeline.payer_tmp_folder, 'payer_spine_localization')
+        
+        subprocess.run(['python', os.path.join(inference_pipeline.payer_bin_files, 'main_spine_localization.py'),
+                        '--image_folder', inference_pipeline.preprocessed_image_folder,
+                        '--setup_folder', inference_pipeline.payer_tmp_folder,
+                        '--model_files', os.path.join(inference_pipeline.payer_model_files, 'spine_localization'),
+                        '--output_folder', spine_localization_folder])
+        
+        return {'spine_localization_folder': spine_localization_folder}
 
 def main():
     pipeline = InferencePipeline([
-        PayerPreprocessing('/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/sorted/4899')
+        PayerPreprocessing('/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/sorted/4899'),
+        PayerSpineLocalization()
     ])
 
     dirname = dirname = os.path.dirname(os.path.abspath(__file__))
     pipeline.payer_bin_files = os.path.join(dirname, 'container', 'bin')
+    pipeline.payer_model_files = os.path.join(dirname, 'container', 'models')
     # pipeline.payer_tmp_folder = tempfile.TemporaryDirectory()
     pipeline.payer_tmp_folder = os.path.join(dirname, 'tmp')
 

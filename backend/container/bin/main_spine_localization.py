@@ -6,6 +6,10 @@ import traceback
 from collections import OrderedDict
 from glob import glob
 
+# NOTE: this is a workaround for running this file outside of the Docker container 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(SCRIPT_DIR, 'MedicalDataAugmentationTool'))
+
 import numpy as np
 import tensorflow as tf
 import utils.io.image
