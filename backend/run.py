@@ -25,8 +25,6 @@ import tempfile
 
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
-# TODO create custom InferenceClass for Payer algorithm
-
 def main():
     pipeline = InferencePipeline([
         PayerPreprocessing('/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/sorted/4899'),
@@ -36,6 +34,7 @@ def main():
         MuscleAdiposeTissueSegmentation(16, 'abCT_v0.0.1'),
         MuscleAdiposeTissuePostProcessing(),
         MuscleAdiposeTissueComputeMetrics(),
+        # TODO: update saving method (this point forward)
         MuscleAdiposeTissueVisualizer(),
         # MuscleAdiposeTissueH5Saver(),
         MuscleAdiposeTissueMetricsSaver()
