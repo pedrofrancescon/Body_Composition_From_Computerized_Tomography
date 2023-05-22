@@ -130,14 +130,14 @@ class MainLoop(MainLoopBase):
                 continue
             coords = np.array(landmark.coords.tolist())
             # verse_coords = np.array([coords[1], size[2] * spacing[2] - coords[2], size[0] * spacing[0] - coords[0]])
-            verse_coords = np.array([coords[0]/spacing[0], size[1] - coords[1]/spacing[1], coords[2]/spacing[2]])
+            verse_coords = np.array([coords[0]/spacing[0], coords[1]/spacing[1], coords[2]/spacing[2]])
             new_landmark.coords = verse_coords
             new_landmarks.append(new_landmark)
         return new_landmarks
 
     def save_landmarks_verse_json(self, landmarks, filename):
         verse_landmarks_list = []
-        verse_landmarks_list.append({"direction": ["L","A","S"]})
+        verse_landmarks_list.append({"direction": ["L","P","S"]})
         for i, landmark in enumerate(landmarks):
             if landmark.is_valid:
                 verse_landmarks_list.append({'label': self.landmark_mapping[i],

@@ -3,6 +3,7 @@ import argparse
 import os
 import numpy as np
 import itk
+import json
 
 def reorient_to_rai(image):
     """
@@ -70,27 +71,15 @@ def load_dicom(folder_path):
     maxSlices = 0
     for uid in seriesUID:
         filenames = namesGenerator.GetFileNames(uid)
-        # TODO: implement finer more robust method for determining the best series
+        # TODO: implement finer/more robust method for determining the best series
         if len(filenames) > maxSlices: 
             maxSlices = len(filenames)
             largest_series = filenames
-    # dicomIO = itk.GDCMImageIO.New()
-    # reader.SetImageIO(dicomIO)
+    file_paths = dict((x, y) for x, y in enumerate(largest_series))
     reader.SetFileNames(largest_series)
-    # reader.ForceOrthogonalDirectionOff()
     image = reader.GetOutput()
     image.Update()
-    return image
-
-def load_from_path(path):
-    if os.path.isfile(path) and path.endswith('.nii.gz'):
-        image = load_nifti(path)
-        return image
-    elif os.path.isdir(path):
-        image = load_dicom(path)
-        return image
-    else:
-        raise Exception(f'Unable to process path "{path}"')
+    return image, file_paths
 
 
 def preprocess(image, sigma):
@@ -103,24 +92,22 @@ def preprocess(image, sigma):
     reoriented.Update()
     return reoriented
 
-def preprocess_from_path(path, sigma):
-    image, _ = load_from_path(path)
-    preprocessed = preprocess(image, sigma)
-    return preprocessed
-
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--image_folder', type=str, required=True)
-    parser.add_argument('--output_folder', type=str, required=True)
-    parser.add_argument('--basename', type=str, required=True)
+    parser.add_argument('--image_folder', type=str, required=False)
+    parser.add_argument('--output_folder', type=str, required=False)
+    parser.add_argument('--basename', type=str, required=False)
     parser_args = parser.parse_args()
     
     if not os.path.exists(parser_args.output_folder):
         os.makedirs(parser_args.output_folder)
 
-    image = load_from_path(parser_args.image_folder)
+    image, file_paths = load_dicom(parser_args.image_folder)
     preprocessed = preprocess(image, 0.75)
 
     filename = os.path.join(parser_args.output_folder, parser_args.basename + '.nii.gz')
     itk.imwrite(preprocessed, filename)
+
+    with open(os.path.join(parser_args.output_folder, parser_args.basename + '_paths.json'), 'w') as outfile:
+        outfile.write(json.dumps(file_paths))
