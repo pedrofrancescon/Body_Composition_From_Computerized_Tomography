@@ -12,8 +12,8 @@ def clean_text(string):
     return string.lower()  
    
 # user specified parameters
-src = "/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/raw/1.2.840.113619.2.417.3.2831161857.873.1675253033.284"
-dst = "/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/sorted"
+src = ""
+dst = ""
 
 print('reading file list...')
 unsortedList = []
