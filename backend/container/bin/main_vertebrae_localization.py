@@ -22,7 +22,7 @@ import utils.sitk_image
 import utils.sitk_np
 from dataset import Dataset
 from network import SpatialConfigurationNet, Unet
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
+from tensorflow.keras import mixed_precision
 from tensorflow_train_v2.train_loop import MainLoopBase
 from tensorflow_train_v2.utils.output_folder_handler import OutputFolderHandler
 from tqdm import tqdm
