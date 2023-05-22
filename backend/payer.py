@@ -2,11 +2,11 @@
 
 from Comp2Comp.comp2comp.inference_pipeline import InferencePipeline
 from Comp2Comp.comp2comp.inference_class_base import InferenceClass
+from pathlib import Path
 
 import os
 import json
 import subprocess
-import tempfile
 
 class PayerPreprocessing(InferenceClass):
     def __init__(self, dicom_folder):
@@ -74,7 +74,7 @@ class L3Slicer(InferenceClass):
         l3_z_coord = round(centroids['22']['z'])
         l3_dicom_path = paths[f'{l3_z_coord}']
         
-        inference_pipeline.dicom_file_paths = [l3_dicom_path]
+        inference_pipeline.dicom_file_paths = [Path(l3_dicom_path)]
         
         return {}
 
@@ -93,23 +93,3 @@ class L3Slicer(InferenceClass):
     def load_json(self, json_path):
         with open(json_path) as json_file:
             return json.load(json_file)
-
-def main():
-    pipeline = InferencePipeline([
-        PayerPreprocessing('/home/pedrofrancescon/Desktop/TCC_local/images/CIMAD/sorted/4899'),
-        PayerSpineLocalization(),
-        PayerVertebraeLocalization(),
-        L3Slicer()
-    ])
-
-    dirname = dirname = os.path.dirname(os.path.abspath(__file__))
-    pipeline.payer_bin_files = os.path.join(dirname, 'container', 'bin')
-    pipeline.payer_model_files = os.path.join(dirname, 'container', 'models')
-    # pipeline.payer_tmp_folder = tempfile.TemporaryDirectory()
-    pipeline.payer_tmp_folder = os.path.join(dirname, 'tmp')
-
-    pipeline()
-
-
-if __name__ == "__main__":
-    main()
