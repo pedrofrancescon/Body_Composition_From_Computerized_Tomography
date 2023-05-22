@@ -9,6 +9,10 @@ from collections import OrderedDict
 from copy import deepcopy
 from glob import glob
 
+# NOTE: this is a workaround for running this file outside of the Docker container 
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(SCRIPT_DIR, 'MedicalDataAugmentationTool'))
+
 import numpy as np
 import tensorflow as tf
 import utils.io.image
@@ -18,7 +22,7 @@ import utils.sitk_image
 import utils.sitk_np
 from dataset import Dataset
 from network import SpatialConfigurationNet, Unet
-from tensorflow.keras.mixed_precision import experimental as mixed_precision
+from tensorflow.keras import mixed_precision
 from tensorflow_train_v2.train_loop import MainLoopBase
 from tensorflow_train_v2.utils.output_folder_handler import OutputFolderHandler
 from tqdm import tqdm
@@ -61,7 +65,7 @@ class MainLoop(MainLoopBase):
             self.network = Unet
 
         self.evaluate_landmarks_postprocessing = True
-        self.save_output_images = True
+        self.save_output_images = False
         self.save_debug_images = False
         self.image_folder = config.image_folder
         self.setup_folder = config.setup_folder
@@ -126,14 +130,14 @@ class MainLoop(MainLoopBase):
                 continue
             coords = np.array(landmark.coords.tolist())
             # verse_coords = np.array([coords[1], size[2] * spacing[2] - coords[2], size[0] * spacing[0] - coords[0]])
-            verse_coords = np.array([coords[0]/spacing[0], size[1] - coords[1]/spacing[1], coords[2]/spacing[2]])
+            verse_coords = np.array([coords[0]/spacing[0], coords[1]/spacing[1], coords[2]/spacing[2]])
             new_landmark.coords = verse_coords
             new_landmarks.append(new_landmark)
         return new_landmarks
 
     def save_landmarks_verse_json(self, landmarks, filename):
         verse_landmarks_list = []
-        verse_landmarks_list.append({"direction": ["L","A","S"]})
+        verse_landmarks_list.append({"direction": ["L","P","S"]})
         for i, landmark in enumerate(landmarks):
             if landmark.is_valid:
                 verse_landmarks_list.append({'label': self.landmark_mapping[i],
@@ -228,9 +232,9 @@ class MainLoop(MainLoopBase):
                                      min_max_value=0.05,
                                      smoothing_sigma=2.0)
 
-        with open('possible_successors.pickle', 'rb') as f:
+        with open(os.path.join(SCRIPT_DIR, 'possible_successors.pickle'), 'rb') as f:
             possible_successors = pickle.load(f)
-        with open('units_distances.pickle', 'rb') as f:
+        with open(os.path.join(SCRIPT_DIR, 'units_distances.pickle'), 'rb') as f:
             offsets_mean, distances_mean, distances_std = pickle.load(f)
         spine_postprocessing = SpinePostprocessingGraph(num_landmarks=self.num_landmarks,
                                                         possible_successors=possible_successors,
