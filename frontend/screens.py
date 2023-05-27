@@ -1,11 +1,14 @@
 import tkinter as tk
 from tkinter.filedialog import askdirectory, askopenfilename
 import tkinter.ttk as ttk
+from PIL import ImageTk, Image
 
 
 paddings = {'padx': 5, 'pady': 5}
 entry_font = {'font': ('Helvetica', 12)}
 description = "Selecione pastas contendo arquivos DICOM de exames tomográficos para determinação automatica da composição corporal dos pacientes"
+bodies = {}
+resultsImgs = {}
 
 def root_window():
   app = tk.Tk()
@@ -24,7 +27,7 @@ def home(app):
   home.configure(bg='white')
   lbl_home = ttk.Label(home, text='Composição Corporal', background='white',**entry_font)
   lbl_home.pack()
-  lbl_description = ttk.Label(home, text=description, background='white', padding={'padx': 5, 'pady': 5}, **entry_font)
+  lbl_description = ttk.Label(home, text=description, background='white', padding={'padx': 5, 'pady': 50}, **entry_font)
   lbl_description.pack()
   btn_home = ttk.Button(home, text='Iniciar', command=lambda: path_selection(app), padding={'padx': 5, 'pady': 5})
   btn_home.pack()
@@ -34,7 +37,7 @@ def path_selection(app):
   clear_window(app)
 
   txt_save_path = tk.StringVar()
-  bodies = {}
+  global bodies
 
   pathSelectionScreen = tk.Frame(app)
   pathSelectionScreen.configure(bg='white')
@@ -81,8 +84,8 @@ def processing(app,txt_save_path: str,bodies: dict):
   frm_proc_footer = tk.Frame(processingScreen, relief=tk.RAISED, bg='white')
   btn_proc_res = tk.Button(frm_proc_footer, text='Visualizar', command=lambda: results(app), width=6, height=3, background='green', foreground='white', **entry_font, **paddings)
 
-  for filep in bodies.keys():
-      createProcsRowFrame(frm_proc_body, filep)
+  for filepath in bodies.keys():
+      createProcsRowFrame(frm_proc_body, filepath)
 
   lbl_proc_save_path.pack(side=tk.LEFT)
   lbl_proc_saved_path.pack(side=tk.LEFT, padx=5)
@@ -99,18 +102,32 @@ def processing(app,txt_save_path: str,bodies: dict):
 def results(app):
   clear_window(app)
   resultsScreen = tk.Frame(app, background='white')
-  lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
+  lbl_result = ttk.Label(resultsScreen, text='Resultado', background='white', **entry_font)
   lbl_result.pack()
-  photo = tk.PhotoImage(file='./wdw_hbone/97097.png')
+  # create a scrollbar widget #scrollbar = ttk.Scrollbar(app,orient='vertical',command=widget.yview)
+  # communicate back to the scrollbar #widget['yscrollcommand'] = scrollbar.set
+  for filepath in bodies.keys():
+    createResultImage(resultsScreen, filepath)
+  resultsScreen.pack()
+
+def createResultImage(masterFrame, filepath):
+  global resultsImgs
+  result_img = tk.Frame(masterFrame, relief=tk.SUNKEN, bg='white', border=1,**paddings)
+  resultsImgs[filepath] = result_img
+  lbl_result = ttk.Label(result_img, text=filepath, background='white', **entry_font)
+  lbl_result.pack()
+  imagem = Image.open('D:/Documentos/TCC/Comp2Comp/figures/muscle_adipose_tissue_example.png')
+  imagem = imagem.resize((256, 256), Image.ANTIALIAS)
+  photo =  ImageTk.PhotoImage(imagem)
   image_label = ttk.Label(
-      resultsScreen,
+      result_img,
       background='white',
       image=photo,
-      padding=5,
+      padding=5
   )
   image_label.image = photo
   image_label.pack()
-  resultsScreen.pack()
+  result_img.pack()
 
 ## rows
 def createProcsRowFrame(master, filepath: str):

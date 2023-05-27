@@ -150,25 +150,25 @@ def createProcessingFrame():
 
 #### frame resultados
 def createResultFrame():
-  resultsScreen = tk.Frame(app, background='white')
-  lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
-  lbl_result.pack()
-  photo = tk.PhotoImage(file='./wdw_hbone/4899.png')
-  image_label = ttk.Label(
-      resultsScreen,
-      background='white',
-      image=photo,
-      padding=5
-  )
-  image_label.pack()
+  
   return resultsScreen
 ####################
-
+resultsScreen = tk.Frame(app, background='white')
+lbl_result = ttk.Label(resultsScreen, text='Deu tudo errado!!!', background='white', **entry_font)
+lbl_result.pack()
+photo = tk.PhotoImage(file='./wdw_hbone/4899.png')
+image_label = ttk.Label(
+    resultsScreen,
+    background='white',
+    image=photo,
+    padding=5
+)
+image_label.pack()
 #creating frames
 home = createHomeFrame()
 pathSelectionScreen = createPathsSelectionFrame()
 processingScreen = createProcessingFrame()
-resultsScreen = createResultFrame()
+#resultsScreen = createResultFrame()
 
 #### Dicionário para mapear as páginas
 pages = {0: home, 1: pathSelectionScreen, 2: processingScreen, 3: resultsScreen}
