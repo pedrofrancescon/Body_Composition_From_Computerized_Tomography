@@ -21,8 +21,6 @@ from payer import (
     L3Slicer
 )
 
-import tempfile
-
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
 def processDICOM(dicom_path, save_path):
