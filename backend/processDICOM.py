@@ -24,32 +24,35 @@ from payer import (
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
 def processDICOM(dicom_path, save_path):
-    pipeline = InferencePipeline([
-        PayerPreprocessing(dicom_path),
-        PayerSpineLocalization(),
-        PayerVertebraeLocalization(),
-        L3Slicer(),
-        MuscleAdiposeTissueSegmentation(16, 'abCT_v0.0.1'),
-        MuscleAdiposeTissuePostProcessing(),
-        MuscleAdiposeTissueComputeMetrics(),
-        MuscleAdiposeTissueVisualizer(),
-        MuscleAdiposeTissueMetricsSaver()
-    ])
-
+    
     with tempfile.TemporaryDirectory() as tmpdirname:
-        dirname = os.path.dirname(os.path.abspath(__file__))
-        pipeline.payer_bin_files = os.path.join(dirname, 'Payer', 'bin')
-        pipeline.payer_model_files = os.path.join(dirname, 'Payer', 'models')
-        pipeline.payer_tmp_folder = tmpdirname
-        
-        pipeline.model_dir = os.path.join(dirname, "Comp2Comp", "models")
         
         if not os.path.exists(save_path):
-            os.makedirs(save_path)
+            os.makedirs(save_path, exist_ok=True)
         
-        pipeline.output_dir = save_path
-        
+        dirname = os.path.dirname(os.path.abspath(__file__))
+        config = {
+            "payer_bin_files": os.path.join(dirname, 'Payer', 'bin'),
+            "payer_model_files": os.path.join(dirname, 'Payer', 'models'),
+            "payer_tmp_folder": tmpdirname,
+            "model_dir": os.path.join(dirname, "Comp2Comp", "models"),
+            "output_dir": save_path
+        }
+
+        pipeline = InferencePipeline([
+            PayerPreprocessing(dicom_path),
+            PayerSpineLocalization(),
+            PayerVertebraeLocalization(),
+            L3Slicer(),
+            MuscleAdiposeTissueSegmentation(16, 'abCT_v0.0.1'),
+            MuscleAdiposeTissuePostProcessing(),
+            MuscleAdiposeTissueComputeMetrics(),
+            MuscleAdiposeTissueVisualizer(),
+            MuscleAdiposeTissueMetricsSaver()
+        ], config=config)
+
         pipeline()
+        
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
