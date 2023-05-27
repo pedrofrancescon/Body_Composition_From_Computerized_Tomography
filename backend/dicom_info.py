@@ -3,13 +3,22 @@
 import pydicom
 import argparse
 import os
+from datetime import datetime
 
 def dicom_info(dicom_path):
     for root, _, files in os.walk(dicom_path):
         for file in files: 
             if ".dcm" in file: # exclude non-dicoms, good for messy folders
                 ds = pydicom.read_file(os.path.join(root, file), force=True)
-                return {"id": ds.get("PatientID", "NA")}
+                
+                date = ds.get("StudyDate", "NA")
+                if date != "NA": date = datetime.strptime(date, '%Y%m%d')
+                
+                return {
+                    "id": ds.get("PatientID", "NA"),
+                    "description": ds.get("StudyDescription", "NA"),
+                    "date": date
+                }
             
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
