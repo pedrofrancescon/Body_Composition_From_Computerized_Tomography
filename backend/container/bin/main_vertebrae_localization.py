@@ -33,7 +33,6 @@ from utils.landmark.spine_postprocessing_graph import SpinePostprocessingGraph
 from utils.landmark.visualization.landmark_visualization_matplotlib import LandmarkVisualizationMatplotlib
 from vertebrae_localization_postprocessing import add_landmarks_from_neighbors, filter_landmarks_top_bottom, reshift_landmarks
 
-
 class MainLoop(MainLoopBase):
     def __init__(self, config):
         """
@@ -175,38 +174,38 @@ class MainLoop(MainLoopBase):
             labels_size_np = [self.num_landmarks] + image_size_for_tilers
             image_tiler = ImageTiler(full_image.shape, image_size_np, self.cropped_inc, True, -1)
             prediction_tiler = ImageTiler((self.num_landmarks,) + full_image.shape[1:], labels_size_np, self.cropped_inc, True, -np.inf)
-            prediction_local_tiler = ImageTiler((self.num_landmarks,) + full_image.shape[1:], labels_size_np, self.cropped_inc, True, -np.inf)
-            prediction_spatial_tiler = ImageTiler((self.num_landmarks,) + full_image.shape[1:], labels_size_np, self.cropped_inc, True, -np.inf)
+            # prediction_local_tiler = ImageTiler((self.num_landmarks,) + full_image.shape[1:], labels_size_np, self.cropped_inc, True, -np.inf)
+            # prediction_spatial_tiler = ImageTiler((self.num_landmarks,) + full_image.shape[1:], labels_size_np, self.cropped_inc, True, -np.inf)
         else:
             image_size_for_tilers = np.minimum(full_image.shape[:-1], list(reversed(self.max_image_size_for_cropped_test))).tolist()
             image_size_np = image_size_for_tilers + [1]
             labels_size_np = image_size_for_tilers + [self.num_landmarks]
             image_tiler = ImageTiler(full_image.shape, image_size_np, self.cropped_inc, True, -1)
             prediction_tiler = ImageTiler(full_image.shape[:-1] + (self.num_landmarks,), labels_size_np, self.cropped_inc, True, -np.inf)
-            prediction_local_tiler = ImageTiler(full_image.shape[:-1] + (self.num_landmarks,), labels_size_np, self.cropped_inc, True, -np.inf)
-            prediction_spatial_tiler = ImageTiler(full_image.shape[:-1] + (self.num_landmarks,), labels_size_np, self.cropped_inc, True, -np.inf)
+            # prediction_local_tiler = ImageTiler(full_image.shape[:-1] + (self.num_landmarks,), labels_size_np, self.cropped_inc, True, -np.inf)
+            # prediction_spatial_tiler = ImageTiler(full_image.shape[:-1] + (self.num_landmarks,), labels_size_np, self.cropped_inc, True, -np.inf)
 
-        for image_tiler, prediction_tiler, prediction_local_tiler, prediction_spatial_tiler in zip(image_tiler, prediction_tiler, prediction_local_tiler, prediction_spatial_tiler):
+        for image_tiler, prediction_tiler in zip(image_tiler, prediction_tiler):
             current_image = image_tiler.get_current_data(full_image)
             predictions = []
-            predictions_local = []
-            predictions_spatial = []
+            # predictions_local = []
+            # predictions_spatial = []
             for load_model_filename in self.load_model_filenames:
                 if len(self.load_model_filenames) > 1:
                     self.load_model(load_model_filename)
-                prediction, prediction_local, prediction_spatial = self.call_model(np.expand_dims(current_image, axis=0))
+                prediction, _, _ = self.call_model(np.expand_dims(current_image, axis=0))
                 predictions.append(prediction.numpy())
-                predictions_local.append(prediction_local.numpy())
-                predictions_spatial.append(prediction_spatial.numpy())
+                # predictions_local.append(prediction_local.numpy())
+                # predictions_spatial.append(prediction_spatial.numpy())
             prediction = np.mean(predictions, axis=0)
-            prediction_local = np.mean(predictions_local, axis=0)
-            prediction_spatial = np.mean(predictions_spatial, axis=0)
-            image_tiler.set_current_data(current_image)
+            # prediction_local = np.mean(predictions_local, axis=0)
+            # prediction_spatial = np.mean(predictions_spatial, axis=0)
+            # image_tiler.set_current_data(current_image)
             prediction_tiler.set_current_data(np.squeeze(prediction, axis=0))
-            prediction_local_tiler.set_current_data(np.squeeze(prediction_local, axis=0))
-            prediction_spatial_tiler.set_current_data(np.squeeze(prediction_spatial, axis=0))
+            # prediction_local_tiler.set_current_data(np.squeeze(prediction_local, axis=0))
+            # prediction_spatial_tiler.set_current_data(np.squeeze(prediction_spatial, axis=0))
 
-        return image_tiler.output_image, prediction_tiler.output_image, prediction_local_tiler.output_image, prediction_spatial_tiler.output_image, transformation
+        return prediction_tiler.output_image, transformation
 
     def test(self):
         """
@@ -217,11 +216,11 @@ class MainLoop(MainLoopBase):
         if len(self.load_model_filenames) == 1:
             self.load_model(self.load_model_filenames[0])
 
-        vis = LandmarkVisualizationMatplotlib(dim=3,
-                                              annotations=dict([(i, f'C{i + 1}') for i in range(7)] +        # 0-6: C1-C7
-                                                               [(i, f'T{i - 6}') for i in range(7, 19)] +    # 7-18: T1-12
-                                                               [(i, f'L{i - 18}') for i in range(19, 25)] +  # 19-24: L1-6
-                                                               [(25, 'T13')]))                               # 25: T13
+        # vis = LandmarkVisualizationMatplotlib(dim=3,
+        #                                       annotations=dict([(i, f'C{i + 1}') for i in range(7)] +        # 0-6: C1-C7
+        #                                                        [(i, f'T{i - 6}') for i in range(7, 19)] +    # 7-18: T1-12
+        #                                                        [(i, f'L{i - 18}') for i in range(19, 25)] +  # 19-24: L1-6
+        #                                                        [(25, 'T13')]))                               # 25: T13
 
         channel_axis = 0
         if self.data_format == 'channels_last':
@@ -253,17 +252,17 @@ class MainLoop(MainLoopBase):
                 datasources = dataset_entry['datasources']
                 input_image = datasources['image']
 
-                image, prediction, prediction_local, prediction_spatial, transformation = self.test_cropped_image(dataset_entry)
+                prediction, transformation = self.test_cropped_image(dataset_entry)
 
-                origin = transformation.TransformPoint(np.zeros(3, np.float64))
-                if self.save_output_images:
-                    heatmap_normalization_mode = (-1, 1)
-                    image_type = np.uint8
-                    utils.io.image.write_multichannel_np(image,              self.output_folder_handler.path('output', current_id + '_input.mha'),              output_normalization_mode='min_max',                                 sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
-                    utils.io.image.write_multichannel_np(prediction,         self.output_folder_handler.path('output', current_id + '_prediction.mha'),         output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
-                    utils.io.image.write_multichannel_np(prediction,         self.output_folder_handler.path('output', current_id + '_prediction_rgb.mha'),     output_normalization_mode=(0, 1), channel_layout_mode='channel_rgb', sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
-                    utils.io.image.write_multichannel_np(prediction_local,   self.output_folder_handler.path('output', current_id + '_prediction_local.mha'),   output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
-                    utils.io.image.write_multichannel_np(prediction_spatial, self.output_folder_handler.path('output', current_id + '_prediction_spatial.mha'), output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
+                # origin = transformation.TransformPoint(np.zeros(3, np.float64))
+                # if self.save_output_images:
+                #     heatmap_normalization_mode = (-1, 1)
+                #     image_type = np.uint8
+                #     utils.io.image.write_multichannel_np(image,              self.output_folder_handler.path('output', current_id + '_input.mha'),              output_normalization_mode='min_max',                                 sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
+                #     utils.io.image.write_multichannel_np(prediction,         self.output_folder_handler.path('output', current_id + '_prediction.mha'),         output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
+                #     utils.io.image.write_multichannel_np(prediction,         self.output_folder_handler.path('output', current_id + '_prediction_rgb.mha'),     output_normalization_mode=(0, 1), channel_layout_mode='channel_rgb', sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
+                #     utils.io.image.write_multichannel_np(prediction_local,   self.output_folder_handler.path('output', current_id + '_prediction_local.mha'),   output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
+                #     utils.io.image.write_multichannel_np(prediction_spatial, self.output_folder_handler.path('output', current_id + '_prediction_spatial.mha'), output_normalization_mode=heatmap_normalization_mode,                sitk_image_output_mode='vector', data_format=self.data_format, image_type=image_type, spacing=self.image_spacing, origin=origin)
 
                 local_maxima_landmarks = heatmap_maxima.get_landmarks(prediction, input_image, self.image_spacing, transformation)
                 curr_landmarks_no_postprocessing = [l[0] if len(l) > 0 else Landmark(coords=[np.nan] * 3, is_valid=False)  for l in local_maxima_landmarks]
@@ -280,9 +279,9 @@ class MainLoop(MainLoopBase):
                     curr_landmarks = curr_landmarks_no_postprocessing
                 landmarks[current_id] = curr_landmarks
 
-                if self.save_output_images:
-                    vis.visualize_landmark_projections(input_image, curr_landmarks_no_postprocessing, filename=self.output_folder_handler.path('output', current_id + '_landmarks.png'))
-                    vis.visualize_landmark_projections(input_image, curr_landmarks,                   filename=self.output_folder_handler.path('output', current_id + '_landmarks_pp.png'))
+                # if self.save_output_images:
+                #     vis.visualize_landmark_projections(input_image, curr_landmarks_no_postprocessing, filename=self.output_folder_handler.path('output', current_id + '_landmarks.png'))
+                #     vis.visualize_landmark_projections(input_image, curr_landmarks,                   filename=self.output_folder_handler.path('output', current_id + '_landmarks_pp.png'))
 
                 verse_landmarks = self.convert_landmarks_to_verse_indexing(curr_landmarks, input_image)
                 self.save_landmarks_verse_json(verse_landmarks, self.output_folder_handler.path(current_id + '_ctd.json'))
@@ -291,9 +290,9 @@ class MainLoop(MainLoopBase):
                 traceback.print_exc(file=sys.stdout)
                 pass
 
-        utils.io.landmark.save_points_csv(landmarks, self.output_folder_handler.path('landmarks.csv'))
-        utils.io.landmark.save_points_csv(landmarks_no_postprocessing, self.output_folder_handler.path('landmarks_no_postprocessing.csv'))
-        self.save_valid_landmarks_list(landmarks, self.output_folder_handler.path('valid_landmarks.csv'))
+        # utils.io.landmark.save_points_csv(landmarks, self.output_folder_handler.path('landmarks.csv'))
+        # utils.io.landmark.save_points_csv(landmarks_no_postprocessing, self.output_folder_handler.path('landmarks_no_postprocessing.csv'))
+        # self.save_valid_landmarks_list(landmarks, self.output_folder_handler.path('valid_landmarks.csv'))
 
 
 class dotdict(dict):
