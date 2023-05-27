@@ -6,6 +6,7 @@ from pathlib import Path
 import os
 import json
 import subprocess
+import shutil
 
 class PayerPreprocessing(InferenceClass):
     def __init__(self, dicom_folder):
@@ -82,8 +83,12 @@ class L3Slicer(InferenceClass):
 
             l3_z_coord = round(centroids['22']['z'])
             l3_dicom_path = paths[f'{l3_z_coord}']
+
+            dicom_file_path = os.path.join(inference_pipeline.payer_tmp_folder, inference_pipeline.basename + '.dcm')
+
+            shutil.copyfile(l3_dicom_path, dicom_file_path)
             
-            inference_pipeline.dicom_file_paths = [Path(l3_dicom_path)]
+            inference_pipeline.dicom_file_paths = [Path(dicom_file_path)]
         except Exception as e:
             raise Exception(f'L3Slicer failed with error: {e}')
         

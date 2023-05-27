@@ -30,7 +30,7 @@ class MuscleAdiposeTissueMetricsSaverAppend(InferenceClass):
         
         df = pd.DataFrame(
             columns=[
-                "File Name",
+                "Patient ID",
                 "Muscle HU",
                 "Muscle CSA (cm^2)",
                 "IMAT HU",
