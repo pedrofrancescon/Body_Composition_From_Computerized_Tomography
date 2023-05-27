@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 
-from Comp2Comp.comp2comp.inference_class_base import InferenceClass
+from .Comp2Comp.comp2comp.inference_class_base import InferenceClass
 from pathlib import Path
 
 import os

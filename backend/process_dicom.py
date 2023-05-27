@@ -4,22 +4,22 @@ import os
 import tempfile
 import argparse
 
-from Comp2Comp.comp2comp.inference_pipeline import InferencePipeline
-from Comp2Comp.comp2comp.muscle_adipose_tissue.muscle_adipose_tissue import (
+from .Comp2Comp.comp2comp.inference_pipeline import InferencePipeline
+from .Comp2Comp.comp2comp.muscle_adipose_tissue.muscle_adipose_tissue import (
     MuscleAdiposeTissueComputeMetrics,
     MuscleAdiposeTissuePostProcessing,
     MuscleAdiposeTissueSegmentation,
 )
-from Comp2Comp.comp2comp.muscle_adipose_tissue.muscle_adipose_tissue_visualization import (
+from .Comp2Comp.comp2comp.muscle_adipose_tissue.muscle_adipose_tissue_visualization import (
     MuscleAdiposeTissueVisualizer,
 )
-from payer import (
+from .payer import (
     PayerPreprocessing,
     PayerSpineLocalization,
     PayerVertebraeLocalization,
     L3Slicer
 )
-from metrics_saver import MuscleAdiposeTissueMetricsSaverAppend
+from .metrics_saver import MuscleAdiposeTissueMetricsSaverAppend
 
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
