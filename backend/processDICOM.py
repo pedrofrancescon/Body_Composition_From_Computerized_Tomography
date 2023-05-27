@@ -38,8 +38,8 @@ def processDICOM(dicom_path, save_path):
 
     with tempfile.TemporaryDirectory() as tmpdirname:
         dirname = os.path.dirname(os.path.abspath(__file__))
-        pipeline.payer_bin_files = os.path.join(dirname, 'container', 'bin')
-        pipeline.payer_model_files = os.path.join(dirname, 'container', 'models')
+        pipeline.payer_bin_files = os.path.join(dirname, 'Payer', 'bin')
+        pipeline.payer_model_files = os.path.join(dirname, 'Payer', 'models')
         pipeline.payer_tmp_folder = tmpdirname
         
         pipeline.model_dir = os.path.join(dirname, "Comp2Comp", "models")
