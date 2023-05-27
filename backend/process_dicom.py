@@ -23,7 +23,7 @@ from payer import (
 
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
-def processDICOM(dicom_path, save_path):
+def process_dicom(dicom_path, save_path):
     
     with tempfile.TemporaryDirectory() as tmpdirname:
         
@@ -59,4 +59,4 @@ if __name__ == "__main__":
     parser.add_argument('--dicom_path', type=str, required=True)
     parser.add_argument('--save_path', type=str, required=True)
     parser_args = parser.parse_args()
-    processDICOM(parser_args.dicom_path, parser_args.save_path)
+    process_dicom(parser_args.dicom_path, parser_args.save_path)

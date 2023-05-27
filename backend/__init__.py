@@ -1,2 +1,2 @@
 #!/usr/bin/env python
-from .processDICOM import processDICOM
+from .process_dicom import process_dicom
