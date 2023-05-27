@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-from Comp2Comp.comp2comp.inference_pipeline import InferencePipeline
 from Comp2Comp.comp2comp.inference_class_base import InferenceClass
 from pathlib import Path
 
@@ -19,10 +18,13 @@ class PayerPreprocessing(InferenceClass):
         inference_pipeline.preprocessed_image_folder = preprocessed_image_folder
         inference_pipeline.basename = os.path.basename(self.dicom_folder)
 
-        subprocess.run(['python', os.path.join(inference_pipeline.payer_bin_files, 'preprocess.py'),
-                        '--image_folder', self.dicom_folder,
-                        '--output_folder', preprocessed_image_folder,
-                        '--basename', inference_pipeline.basename])
+        try:
+            subprocess.check_output(['python', os.path.join(inference_pipeline.payer_bin_files, 'preprocess.py'),
+                                    '--image_folder', self.dicom_folder,
+                                    '--output_folder', preprocessed_image_folder,
+                                    '--basename', inference_pipeline.basename], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            raise Exception(f'Preprocessing failed with error [{e.returncode}]: {e.stdout}')
         
         return {}
     
@@ -34,11 +36,14 @@ class PayerSpineLocalization(InferenceClass):
         
         spine_localization_folder = os.path.join(inference_pipeline.payer_tmp_folder, 'spine_localization')
         
-        subprocess.run(['python', os.path.join(inference_pipeline.payer_bin_files, 'main_spine_localization.py'),
-                        '--image_folder', inference_pipeline.preprocessed_image_folder,
-                        '--setup_folder', inference_pipeline.payer_tmp_folder,
-                        '--model_files', os.path.join(inference_pipeline.payer_model_files, 'spine_localization'),
-                        '--output_folder', spine_localization_folder])
+        try:
+            subprocess.check_output(['python', os.path.join(inference_pipeline.payer_bin_files, 'main_spine_localization.py'),
+                            '--image_folder', inference_pipeline.preprocessed_image_folder,
+                            '--setup_folder', inference_pipeline.payer_tmp_folder,
+                            '--model_files', os.path.join(inference_pipeline.payer_model_files, 'spine_localization'),
+                            '--output_folder', spine_localization_folder], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            raise Exception(f'SpineLocalization failed with error [{e.returncode}]: {e.stdout}')
         
         return {}
     
@@ -50,11 +55,14 @@ class PayerVertebraeLocalization(InferenceClass):
 
         vertebrae_localization_folder = os.path.join(inference_pipeline.payer_tmp_folder, 'vertebrae_localization')
         
-        subprocess.run(['python', os.path.join(inference_pipeline.payer_bin_files, 'main_vertebrae_localization.py'),
-                        '--image_folder', inference_pipeline.preprocessed_image_folder,
-                        '--setup_folder', inference_pipeline.payer_tmp_folder,
-                        '--model_files', os.path.join(inference_pipeline.payer_model_files, 'vertebrae_localization'),
-                        '--output_folder', vertebrae_localization_folder])
+        try:
+            subprocess.check_output(['python', os.path.join(inference_pipeline.payer_bin_files, 'main_vertebrae_localization.py'),
+                            '--image_folder', inference_pipeline.preprocessed_image_folder,
+                            '--setup_folder', inference_pipeline.payer_tmp_folder,
+                            '--model_files', os.path.join(inference_pipeline.payer_model_files, 'vertebrae_localization'),
+                            '--output_folder', vertebrae_localization_folder], stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as e:
+            raise Exception(f'VertebraeLocalization failed with error [{e.returncode}]: {e.stdout}')
         
         return {'vertebrae_localization_folder': vertebrae_localization_folder}
     
@@ -65,16 +73,19 @@ class L3Slicer(InferenceClass):
 
     def __call__(self, inference_pipeline, vertebrae_localization_folder):
         
-        centroids_path = os.path.join(vertebrae_localization_folder, inference_pipeline.basename + '_ctd.json')
-        centroids = self.load_centroids(centroids_path)
+        try:
+            centroids_path = os.path.join(vertebrae_localization_folder, inference_pipeline.basename + '_ctd.json')
+            centroids = self.load_centroids(centroids_path)
 
-        dicom_paths = os.path.join(inference_pipeline.preprocessed_image_folder, inference_pipeline.basename + '_paths.json')
-        paths = self.load_json(dicom_paths)
+            dicom_paths = os.path.join(inference_pipeline.preprocessed_image_folder, inference_pipeline.basename + '_paths.json')
+            paths = self.load_json(dicom_paths)
 
-        l3_z_coord = round(centroids['22']['z'])
-        l3_dicom_path = paths[f'{l3_z_coord}']
-        
-        inference_pipeline.dicom_file_paths = [Path(l3_dicom_path)]
+            l3_z_coord = round(centroids['22']['z'])
+            l3_dicom_path = paths[f'{l3_z_coord}']
+            
+            inference_pipeline.dicom_file_paths = [Path(l3_dicom_path)]
+        except Exception as e:
+            raise Exception(f'L3Slicer failed with error: {e}')
         
         return {}
 
