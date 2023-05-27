@@ -7,7 +7,6 @@ import argparse
 from Comp2Comp.comp2comp.inference_pipeline import InferencePipeline
 from Comp2Comp.comp2comp.muscle_adipose_tissue.muscle_adipose_tissue import (
     MuscleAdiposeTissueComputeMetrics,
-    MuscleAdiposeTissueMetricsSaver,
     MuscleAdiposeTissuePostProcessing,
     MuscleAdiposeTissueSegmentation,
 )
@@ -20,6 +19,7 @@ from payer import (
     PayerVertebraeLocalization,
     L3Slicer
 )
+from metrics_saver import MuscleAdiposeTissueMetricsSaverAppend
 
 os.environ['CUDA_VISIBLE_DEVICES'] = ""
 
@@ -48,7 +48,7 @@ def process_dicom(dicom_path, save_path):
             MuscleAdiposeTissuePostProcessing(),
             MuscleAdiposeTissueComputeMetrics(),
             MuscleAdiposeTissueVisualizer(),
-            MuscleAdiposeTissueMetricsSaver()
+            MuscleAdiposeTissueMetricsSaverAppend()
         ], config=config)
 
         pipeline()
