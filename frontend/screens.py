@@ -1,17 +1,20 @@
+from frontend.strings import strs
 import tkinter as tk
-from tkinter.filedialog import askdirectory, askopenfilename
+from tkinter.filedialog import askdirectory
 import tkinter.ttk as ttk
 from PIL import ImageTk, Image
 
-
+##### global vars #####
+## style
 paddings = {'padx': 5, 'pady': 5}
 entry_font = {'font': ('Helvetica', 12)}
-description = "Selecione pastas contendo arquivos DICOM de exames tomográficos para determinação automatica da composição corporal dos pacientes"
+## data structures
 DICOM = {}
 processing_DICOM = {}
 resultsImgs = {}
 
 
+##### create app window #####
 def root_window():
   app = tk.Tk()
   app.title('Composição Corporal')
@@ -19,23 +22,21 @@ def root_window():
   app.configure(bg='white')
   return app
 
-def clear_window(window):
-  for widget in window.winfo_children():
-    widget.destroy()
 
-## screens
+##### screens #####
+## home screen
 def home(app):
   clear_window(app)
   home = tk.Frame(app)
   home.configure(bg='white')
-  lbl_home = tk.Label(home, text='Composição Corporal', background='white',**entry_font)
+  lbl_home = tk.Label(home, text=strs["home_title"], background='white',**entry_font)
   lbl_home.pack()
-  lbl_description = tk.Label(home, text=description, background='white', padx=50, pady=150, **entry_font)
+  lbl_description = tk.Label(home, text=strs["home_description"], background='white', padx=50, pady=150, **entry_font)
   lbl_description.pack()
-  btn_home = tk.Button(home, text='Iniciar', command=lambda: path_selection(app), background='black', foreground='white', **paddings)
+  btn_home = tk.Button(home, text=strs["home_button"], command=lambda: path_selection(app), background='black', foreground='white', **paddings)
   btn_home.pack()
   home.pack()
-
+## path for TC files and path for saving results selection screen
 def path_selection(app):
   #clean
   clear_window(app)
@@ -57,13 +58,13 @@ def path_selection(app):
   frm_body = tk.Frame(pathSelectionScreen, bg='white')
   explanation_row = tk.Frame(frm_body, relief=tk.SUNKEN, bg='white', **paddings)
   lbl_add_dicom = tk.Label(explanation_row, text="Adicione diretórios contendo exames de Tomografia", bg='white', **paddings, **entry_font)
-  btn_add_body = tk.Button(explanation_row, text='Adicionar', background='black', foreground='white', command=lambda:add_body_row(frm_body, DICOM), **paddings, **entry_font)
+  btn_add_body = tk.Button(explanation_row, text='Adicionar', background='black', foreground='white', command=lambda:add_DICOM_row(frm_body, DICOM), **paddings, **entry_font)
 
 
   frm_header = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
   lbl_save_path = tk.Label(frm_header, text='Salvar em', background='white', foreground='black', **paddings, **entry_font)
   ent_save_path = tk.Entry(frm_header, textvariable=txt_save_path, width=80 , background='white', foreground='black')
-  btn_save_path = tk.Button(frm_header, text='Escolher Local', height=1, command=lambda:open_file(ent_save_path), background='white', foreground='black', **paddings, **entry_font)
+  btn_save_path = tk.Button(frm_header, text='Escolher Local', height=1, command=lambda:select_save_path(ent_save_path), background='white', foreground='black', **paddings, **entry_font)
   
   frm_footer = tk.Frame(pathSelectionScreen, relief=tk.RAISED, bg='white')
   btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: processing(app, txt_save_path, DICOM), background='black', foreground='white', **entry_font, **paddings)
@@ -82,7 +83,7 @@ def path_selection(app):
   frm_body.grid(row=1, column=0, sticky='nsew')
   frm_footer.grid(row=2, column=0, sticky='ew')
   pathSelectionScreen.pack()
-
+## processing status and files info screen
 def processing(app,txt_save_path: str,bodies: dict):
   clear_window(app)
   global processing_DICOM
@@ -114,7 +115,7 @@ def processing(app,txt_save_path: str,bodies: dict):
   processing_screen.pack()
 
   #TODO: chamar aqui 'for' para processamento dos DICOM.
-
+## results image and data preview screen
 def results(app, save_path):
   clear_window(app)
   results_screen = tk.Frame(app, background='white')
@@ -144,10 +145,8 @@ def results(app, save_path):
   results_screen.pack()
 
 
-
-def updateProcessingStatus(filepath, status):
-  processing_DICOM[filepath]['status'].set(status)
-
+##### sub frames ##### 
+## result image and data frame
 def createResultImage(masterFrame, filepath):
   global resultsImgs
   result_img = tk.Frame(masterFrame, relief=tk.SUNKEN, bg='white', border=1,**paddings)
@@ -166,8 +165,7 @@ def createResultImage(masterFrame, filepath):
   image_label.image = photo
   image_label.pack()
   result_img.pack()
-
-## rows
+## processing file row frame
 def createProcsRowFrame(master, filepath: str):
   frm_proc_body_row = tk.Frame(master, relief=tk.SUNKEN, bg='white', border=1,**paddings)
   status_proc = tk.StringVar(frm_proc_body_row, "Ongoing")
@@ -175,38 +173,48 @@ def createProcsRowFrame(master, filepath: str):
   lbl_proc_status = tk.Label(frm_proc_body_row, textvariable=status_proc, bg='white', name='status', **paddings)
 
   processing_DICOM[filepath] = {'framebody': frm_proc_body_row, 'status': status_proc}
+  #processing_DICOM[filepath].append(dicom_info(filepath))
 
   lbl_proc_file_path.pack(side=tk.LEFT)
   lbl_proc_status.pack(side=tk.RIGHT)
   frm_proc_body_row.pack(fill=tk.X)
-
+## selected paths row frame
 def createPathsRowFrame(master, filepath: str, bodies: dict):
   frm_body_row = tk.Frame(master, relief=tk.SUNKEN, bg='white', border=1,**paddings)
   bodies[filepath] = frm_body_row
   lbl_file_path = tk.Label(frm_body_row, text=filepath, bg='white', **paddings)
-  btn_remove_body = tk.Button(frm_body_row, text='X', background='white', foreground='red', command= lambda: delete_body_row(filepath,bodies), **paddings)
+  btn_remove_body = tk.Button(frm_body_row, text='❌', background='white', foreground='red', command= lambda: delete_DICOM_row(filepath,bodies), **paddings)
   lbl_file_path.pack(side=tk.LEFT)
   btn_remove_body.pack(side=tk.RIGHT)
   frm_body_row.pack(fill=tk.X)
 
-## handlers 
-def open_file(entry):
+
+#### handlers ##### 
+##save results path 
+def select_save_path(entry):
   folderpath = askdirectory()
   if not folderpath:
       return
   entry.delete(0, tk.END)
   entry.insert(0, folderpath)
-  
-def delete_body_row(filepath: str, bodies: dict):
+##delete DICOM path
+def delete_DICOM_row(filepath: str, bodies: dict):
   bodies[filepath].pack_forget()
   bodies[filepath].destroy()
   del bodies[filepath]
   #proc_bodies[filepath].pack_forget()
   #proc_bodies[filepath].destroy()
   #del proc_bodies[filepath]
-
-def add_body_row(bodyframe, bodies: dict):
+##add DICOM path
+def add_DICOM_row(bodyframe, bodies: dict):
   filepath = askdirectory() #askopenfilename(filetypes=[("All Files", "*.*")])  
   if not filepath:
       return
   createPathsRowFrame(bodyframe,filepath,bodies)
+## update proccessing status
+def update_processing_status(filepath, status):
+  processing_DICOM[filepath]['status'].set(status)
+## delete actual frame on app window
+def clear_window(window):
+  for widget in window.winfo_children():
+    widget.destroy()
