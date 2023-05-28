@@ -192,31 +192,34 @@ def dicom_to_nifti(folder):
     return nib.Nifti1Image(vol.T, mat), patient_name
 
 
-BASE_PATH = '/home/pedrofrancescon/Desktop/'
+BASE_PATH = ''
 
-for root, dirs, files in os.walk(os.path.join(BASE_PATH, 'TCC_local/results')):
+for root, dirs, files in os.walk(os.path.join(BASE_PATH, 'images/CIMAD/volume_tx_abdomen_s_c')):
     for folder in dirs:
         print(f'Processing {folder}')
         try:
             img_nib, patient_name = dicom_to_nifti(os.path.join(root, folder))
-            ctd_list = dutils.load_centroids(os.path.join(BASE_PATH, 'TCC/backend/container/data/results' ,f'{folder}/{folder}_ctd.json'))
+            ctd_list = dutils.load_centroids(os.path.join(BASE_PATH, 'results', 'payer_l3' ,f'{folder}/{folder}_ctd.json'))
             
-            img_iso = dutils.resample_nib(img_nib, voxel_spacing=(1, 1, 1), order=3)
-            ctd_iso = dutils.rescale_centroids(ctd_list, img_nib, (1,1,1))
+            # img_iso = dutils.resample_nib(img_nib, voxel_spacing=(1, 1, 1), order=3)
+            # ctd_iso = dutils.rescale_centroids(ctd_list, img_nib, (1,1,1))
 
-            img_iso = dutils.reorient_to(img_iso, axcodes_to=('I', 'P', 'L'))
-            ctd_iso = dutils.reorient_centroids_to(ctd_iso, img_iso)
+            img_iso = dutils.reorient_to(img_nib, axcodes_to=('I', 'P', 'L'))
+            ctd_iso = dutils.reorient_centroids_to(ctd_list, img_iso)
 
             im_np  = img_iso.get_fdata()
 
             coords = [vtb_coord[1:] for vtb_coord in ctd_iso if vtb_coord[0] == 22][0]
             l3 = im_np[int(coords[0]),:,:]
 
+            print(l3.shape)
+            print(type(l3))
+
             cmap = plt.cm.gray
-            dutils.wdw_sbone
-            image = cmap(dutils.wdw_hbone(l3))
+            image = cmap(dutils.wdw_sbone(l3))
 
             # save the image
-            plt.imsave(f'/home/pedrofrancescon/Desktop/TCC_local/wdw_hbone/{folder}.png', image)
+            plt.imsave(f'TCC_local/results/comp2comp_l3/{folder}_2.png', image)
+            # break
         except Exception as e:
             print(f'FAILED for {folder} with error {e}')
