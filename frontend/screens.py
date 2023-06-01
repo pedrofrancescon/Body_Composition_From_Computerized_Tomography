@@ -8,6 +8,7 @@ from tkinter.filedialog import askdirectory
 from PIL import ImageTk, Image
 import csv
 import pandas as pd
+import os
 
 ##### global vars #####
 ## style
@@ -154,10 +155,8 @@ def results(app, save_path):
 
   frm_result_body = tk.Frame(results_screen, bg='white', **paddings)
 
-  result_mesures = pd.read_csv('D:\\Documentos\\TCC\\results\\metrics\\metrics.csv', sep=',')
-
   for filepath in DICOMs.keys():
-    createResultImage(frm_result_body, filepath, result_mesures)
+    createResultImage(frm_result_body, filepath, save_path)
   
   frm_result_footer = tk.Frame(results_screen, relief=tk.RAISED, bg='white')
   lbl_final = tk.Label(frm_result_footer, text="Resultados salvos em: "+save_path, background='white', **entry_font)
@@ -173,14 +172,14 @@ def results(app, save_path):
 
 ##### sub frames ##### 
 ## result image and data frame
-def createResultImage(masterFrame, filepath, dados):
+def createResultImage(masterFrame, filepath, save_path):
   global resultsImgs
   result_img = tk.Frame(masterFrame, relief=tk.RAISED, bg='white', border=1,**paddings)
   resultsImgs[filepath] = result_img
   id_dicom=DICOMs[filepath]['id']
   lbl_result = tk.Label(result_img, text=id_dicom, background='white', **entry_font, **paddings)
   lbl_result.pack(side=tk.TOP)
-  imagem = Image.open('D:\\Documentos\\TCC\\results\\L3SlicesColorido\\'+id_dicom+'.png')
+  imagem = Image.open(os.path.join(save_path, 'images', id_dicom + '.png'))
   imagem = imagem.resize((256, 256), Image.ANTIALIAS)
   photo =  ImageTk.PhotoImage(imagem)
   image_label = tk.Label(
