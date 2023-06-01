@@ -4,18 +4,17 @@ from backend import process_dicom
 import tkinter as tk
 import tkinter.messagebox as tkm
 from tkinter.filedialog import askdirectory
-#import tkinter.ttk as ttk
 from PIL import ImageTk, Image
-import csv
 import pandas as pd
+import numpy as np
 
 ##### global vars #####
 ## style
 paddings = {'padx': 5, 'pady': 5}
-entry_font = {'font': ('Helvetica', 12)}
+entry_font = {'font': ('Calibri', 12)}
 ## data structures
 DICOMs = {}
-resultsImgs = {}
+results_imgs = {}
 
 
 ##### create app window #####
@@ -119,7 +118,7 @@ def processing(app, save_path: str, bodies: dict):
   btn_proc_res = tk.Button(frm_proc_footer, text=strs["processing_final_button"], command=lambda: process_all_dicom_files(app, save_path, bodies), width=15, height=3, background='black', foreground='white', **entry_font)
 
   for filepath in bodies.keys():
-      createProcsRowFrame(frm_proc_body, filepath, bodies)
+      create_file_processing_row(frm_proc_body, filepath, bodies)
   
   lbl_proc_id.pack(side=tk.LEFT)
   lbl_proc_path.pack(side=tk.LEFT)
@@ -154,10 +153,10 @@ def results(app, save_path):
 
   frm_result_body = tk.Frame(results_screen, bg='white', **paddings)
 
-  result_mesures = pd.read_csv('D:\\Documentos\\TCC\\results\\metrics\\metrics.csv', sep=',')
-
+  metrics = pd.read_csv(os.path.join(save_path, "metrics", "metrics.csv"), index_col='File Name')
+  
   for filepath in DICOMs.keys():
-    createResultImage(frm_result_body, filepath, result_mesures)
+    create_results_frame(frm_result_body, filepath, save_path, metrics)
   
   frm_result_footer = tk.Frame(results_screen, relief=tk.RAISED, bg='white')
   lbl_final = tk.Label(frm_result_footer, text="Resultados salvos em: "+save_path, background='white', **entry_font)
@@ -173,39 +172,87 @@ def results(app, save_path):
 
 ##### sub frames ##### 
 ## result image and data frame
-def createResultImage(masterFrame, filepath, dados):
-  global resultsImgs
-  result_img = tk.Frame(masterFrame, relief=tk.RAISED, bg='white', border=1,**paddings)
-  resultsImgs[filepath] = result_img
+def create_results_frame(masterFrame, filepath, save_path, metrics):
+  global results_imgs
+  result_frm = tk.Frame(masterFrame, relief=tk.RAISED, bg='white', border=1,**paddings)
+  
+  results_imgs[filepath] = result_frm
   id_dicom=DICOMs[filepath]['id']
-  lbl_result = tk.Label(result_img, text=id_dicom, background='white', **entry_font, **paddings)
+  lbl_result = tk.Label(result_frm, text=id_dicom, background='white', **entry_font, **paddings)
   lbl_result.pack(side=tk.TOP)
-  imagem = Image.open('D:\\Documentos\\TCC\\results\\L3SlicesColorido\\'+id_dicom+'.png')
+  imagem = Image.open(os.path.join(save_path, id_dicom+'.png'))
   imagem = imagem.resize((256, 256), Image.ANTIALIAS)
   photo =  ImageTk.PhotoImage(imagem)
   image_label = tk.Label(
-      result_img,
+      result_frm,
       background='white',
       image=photo,
       **paddings
   )
   image_label.image = photo
   image_label.pack(fill=tk.X)
-  #linha=dados[0][0]
-  lbl_result_id = tk.Label(result_img, text="id: "+id_dicom, background='white', **entry_font, **paddings)
-  lbl_result_id.pack(fill=tk.X)
-  lbl_result_desc = tk.Label(result_img, text="dados: "+id_dicom, background='white', width=20, **entry_font, **paddings)
-  lbl_result_desc.pack(side=tk.LEFT)
-  result_img.pack(side=tk.LEFT)
+
+  #metrics recovering
+  id_dicom=int(DICOMs[filepath]['id'])
+  musc=metrics.loc[id_dicom].loc['Muscle HU']
+  musc2=metrics.loc[id_dicom].loc['Muscle CSA (cm^2)']
+  imat=metrics.loc[id_dicom].loc['IMAT HU']
+  imat2=metrics.loc[id_dicom].loc['IMAT CSA (cm^2)']
+  sat=metrics.loc[id_dicom].loc['SAT HU']
+  sat2=metrics.loc[id_dicom].loc['SAT CSA (cm^2)']
+  vat=metrics.loc[id_dicom].loc['VAT HU']
+  vat2=metrics.loc[id_dicom].loc['VAT CSA (cm^2)'] 
+
+  #frame and grid for metrics display
+  frm_result_data = tk.Frame(result_frm, background='white', **paddings)
+  frm_result_data.rowconfigure(0, weight=1)
+  frm_result_data.rowconfigure(1, weight=1)
+  frm_result_data.rowconfigure(2, weight=1)
+
+  HU = tk.Label(frm_result_data, text="HU", width=10, bg='white', fg='black', **entry_font) 
+  HU.grid(row=1, column=0)
+  cm2 = tk.Label(frm_result_data, text="cm²", width=10, bg='white', fg='black', **entry_font) 
+  cm2.grid(row=2, column=0)
+
+  header_musc = tk.Label(frm_result_data, text="Muscle", width=10, bg='white', fg='black', **entry_font) 
+  header_musc.grid(row=0, column=1)
+  HU_musc = tk.Label(frm_result_data, text=round(musc), width=10, bg='white', fg='black', **entry_font) 
+  HU_musc.grid(row=1, column=1)
+  cm2_musc = tk.Label(frm_result_data, text=round(musc2), width=10, bg='white', fg='black', **entry_font) 
+  cm2_musc.grid(row=2, column=1)
+
+  header_imat = tk.Label(frm_result_data, text="IMAT", width=10, bg='white', fg='black', **entry_font) 
+  header_imat.grid(row=0, column=2)
+  HU_imat = tk.Label(frm_result_data, text=round(imat), width=10, bg='white', fg='black', **entry_font) 
+  HU_imat.grid(row=1, column=2)
+  cm2_imat = tk.Label(frm_result_data, text=round(imat2), width=10, bg='white', fg='black', **entry_font) 
+  cm2_imat.grid(row=2, column=2)
+
+  header_vat = tk.Label(frm_result_data, text="VAT", width=10, bg='white', fg='black', **entry_font) 
+  header_vat.grid(row=0, column=3)
+  HU_vat = tk.Label(frm_result_data, text=round(vat), width=10, bg='white', fg='black', **entry_font) 
+  HU_vat.grid(row=1, column=3)
+  cm2_vat = tk.Label(frm_result_data, text=round(vat2), width=10, bg='white', fg='black', **entry_font) 
+  cm2_vat.grid(row=2, column=3)
+
+  header_sat = tk.Label(frm_result_data, text="SAT", width=10, bg='white', fg='black', **entry_font) 
+  header_sat.grid(row=0, column=4)
+  HU_sat = tk.Label(frm_result_data, text=round(sat), width=10, bg='white', fg='black', **entry_font) 
+  HU_sat.grid(row=1, column=4)
+  cm2_sat = tk.Label(frm_result_data, text=round(sat2), width=10, bg='white', fg='black', **entry_font) 
+  cm2_sat.grid(row=2, column=4)
+
+  frm_result_data.pack(fill=tk.X)
+  result_frm.pack(side=tk.LEFT)
 ## processing file row frame
-def createProcsRowFrame(master, filepath: str, bodies: dict):
+def create_file_processing_row(master, filepath: str, bodies: dict):
   frm_proc_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
-  status_proc = tk.StringVar(frm_proc_body_row, "Processando")
+  status_proc = tk.StringVar(frm_proc_body_row, strs["processing_status_ongoing"])
   
   bodies[filepath].update({'procframe': frm_proc_body_row, 'status': status_proc})
 
   lbl_proc_file_path = tk.Label(frm_proc_body_row, text=filepath, width=70, bg='white', **paddings)
-  lbl_proc_status = tk.Label(frm_proc_body_row, textvariable=status_proc, width=10, bg='white', name='status', **paddings)
+  lbl_proc_status = tk.Label(frm_proc_body_row, textvariable=status_proc, width=10, bg='white', name='statuslbl', **paddings)
   lbl_proc_id = tk.Label(frm_proc_body_row, text=DICOMs[filepath]['id'], width=10, bg='white', **paddings)
   lbl_proc_description = tk.Label(frm_proc_body_row, text=DICOMs[filepath]['description'], width=25, bg='white', **paddings)
   lbl_proc_date = tk.Label(frm_proc_body_row, text=DICOMs[filepath]['date'], width=15, bg='white', **paddings)
@@ -217,7 +264,7 @@ def createProcsRowFrame(master, filepath: str, bodies: dict):
   lbl_proc_status.pack(side=tk.RIGHT)
   frm_proc_body_row.pack(fill=tk.X)
 ## selected paths row frame
-def createPathsRowFrame(master, filepath: str, bodies: dict):
+def create_selected_DICOM_row(master, filepath: str, bodies: dict):
   frm_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
 
   bodies[filepath] = {'pathframe': frm_body_row}
@@ -255,7 +302,7 @@ def add_DICOM_row(bodyframe, bodies: dict):
   filepath = askdirectory() #askopenfilename(filetypes=[("All Files", "*.*")])  
   if not filepath:
       return
-  createPathsRowFrame(bodyframe,filepath,bodies)
+  create_selected_DICOM_row(bodyframe,filepath,bodies)
 ## update proccessing status
 def update_processing_status(filepath, status, bodies):
   bodies[filepath]['status'].set(status)
@@ -268,10 +315,13 @@ def process_all_dicom_files(app, save_path, bodies):
   for filepath in bodies.keys():
     try:
       process_dicom(filepath, save_path)
-      bodies[filepath]['status'].set("Completo")
+      bodies[filepath]['status'].set(strs["processing_status_success"])
       bodies[filepath]['procframe'].pack()
+      tkm.showinfo("Concluído")
     except Exception as err:
-      bodies[filepath]['status'].set("Falhou")
-      tkm.showinfo(message=err)
+      bodies[filepath]['status'].set(strs["processing_status_failed"])
+      #bodies[filepath]['procframe']['statuslbl'].configure(backgorund='red', foreground='white')
+      bodies[filepath]['procframe'].pack()
+      tkm.showinfo("Ouve um erro na identificação de vértebras.")
       print(err)
   results(app, save_path)
