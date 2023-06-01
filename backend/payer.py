@@ -2,6 +2,7 @@
 
 from comp2comp.inference_class_base import InferenceClass
 from pathlib import Path
+from backend.dicom_info import dicom_info
 
 import os
 import json
@@ -17,7 +18,9 @@ class PayerPreprocessing(InferenceClass):
         
         preprocessed_image_folder = os.path.join(inference_pipeline.payer_tmp_folder, 'data_preprocessed')
         inference_pipeline.preprocessed_image_folder = preprocessed_image_folder
-        inference_pipeline.basename = os.path.basename(self.dicom_folder)
+
+        dcm_info = dicom_info(self.dicom_folder)
+        inference_pipeline.basename = dcm_info['id']
 
         try:
             subprocess.check_output(['python', os.path.join(inference_pipeline.payer_bin_files, 'preprocess.py'),
