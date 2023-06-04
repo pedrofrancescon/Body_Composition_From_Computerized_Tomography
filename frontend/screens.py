@@ -7,12 +7,14 @@ from tkinter import ttk
 from tkinter.filedialog import askdirectory
 from PIL import ImageTk, Image
 import pandas as pd
-
+import threading as th
+import multiprocessing as mp
+import os 
 ##### global vars #####
 ## styles
 paddings = {'padx': 5, 'pady': 5}
 entry_font = {'font': ('Calibri', 12)}
-basic_style = {'background': 'white', 'foreground': 'black', 'border': 1, 'font': ('Calibri', 12)} 
+basic_style = {'background': 'white', 'foreground': 'black', 'font': ('Calibri', 12)} 
 button_style = {'background': 'black', 'foreground': 'white', 'font': ('Calibri', 12)}
 positive_style = {'background': 'white', 'foreground': 'green', 'font': ('Calibri', 12)}
 negative_style = {'background': 'white', 'foreground': 'red', 'font': ('Calibri', 12)}
@@ -25,7 +27,7 @@ results_imgs = {}
 def root_window():
   app = tk.Tk()
   app.title(strs["home_title"])
-  app.geometry('1200x900')
+  app.geometry('1200x800')
   app.configure(bg='white')
   return app
 
@@ -105,7 +107,7 @@ def file_path_selection_screen(app):
   frm_footer.grid(row=2, column=0, sticky='ew')
   path_selection_screen.pack()
 ## processing status and files info screen
-def processing_screen(app, save_path: str, bodies: dict):
+def processing_screen(app, save_path: str, bodies: dict, inf_process):
   clear_window(app)
   #global processing_DICOM
   processing_screen = tk.Frame(app, bg='white')
@@ -114,39 +116,41 @@ def processing_screen(app, save_path: str, bodies: dict):
   processing_screen.rowconfigure(2, weight=1)
   processing_screen.columnconfigure(0, minsize=900, weight=1)
 
-  frm_proc_body = tk.Frame(processing_screen, bg='white')
-  separator = ttk.Separator(frm_proc_body, orient='horizontal')
+  frm_process_body = tk.Frame(processing_screen, bg='white')
+  separator = ttk.Separator(frm_process_body, orient='horizontal')
 
-  frm_proc_header = tk.Frame(processing_screen, relief=tk.FLAT, bg='white')
-  lbl_proc_id = tk.Label(frm_proc_header, text=strs["processing_tc_id_header"], width=10, name="ident", **basic_style, **paddings)
-  lbl_proc_path = tk.Label(frm_proc_header, text=strs["processing_file_path_header"],width=60, background='white', foreground='black', **paddings, **entry_font)
-  lbl_proc_description = tk.Label(frm_proc_header, text=strs["processing_description_header"], width=25, background='white', foreground='black', name="desc", **paddings, **entry_font)
-  lbl_proc_date = tk.Label(frm_proc_header, text=strs["processing_date_header"], width=15, background='white', foreground='black', name="date", **paddings, **entry_font)
-  lbl_proc_status = tk.Label(frm_proc_header, text=strs["processing_status_header"], width=10, background='white', foreground='black', **paddings, **entry_font)
+  frm_process_header = tk.Frame(processing_screen, relief=tk.FLAT, bg='white')
+  lbl_process_id = tk.Label(frm_process_header, text=strs["processing_tc_id_header"], width=10, name="ident", **basic_style, **paddings)
+  lbl_process_path = tk.Label(frm_process_header, text=strs["processing_file_path_header"],width=60, background='white', foreground='black', **paddings, **entry_font)
+  lbl_process_description = tk.Label(frm_process_header, text=strs["processing_description_header"], width=25, background='white', foreground='black', name="desc", **paddings, **entry_font)
+  lbl_process_date = tk.Label(frm_process_header, text=strs["processing_date_header"], width=15, background='white', foreground='black', name="date", **paddings, **entry_font)
+  lbl_process_status = tk.Label(frm_process_header, text=strs["processing_status_header"], width=10, background='white', foreground='black', **paddings, **entry_font)
 
-  frm_proc_footer = tk.Frame(processing_screen, relief=tk.RAISED, bg='white')
-  btn_proc_res = tk.Button(frm_proc_footer, text=strs["processing_final_button"], command=lambda: results_screen(app, save_path, bodies), width=15, height=3, background='black', foreground='white', **entry_font)
+  frm_process_footer = tk.Frame(processing_screen, relief=tk.RAISED, bg='white')
+  btn_process_cancel = tk.Button(frm_process_footer, text=strs["processing_cancel_button"], command=lambda: inf_process.close(), border=1, relief=tk.RAISED, width=15, height=3, **basic_style)
+  btn_process_res = tk.Button(frm_process_footer, text=strs["processing_final_button"], command=lambda: results_screen(app, save_path, bodies), width=15, height=3, **button_style)
 
   separator.pack(fill=tk.X)
 
   for filepath in bodies.keys():
-      create_file_processing_row(frm_proc_body, filepath, bodies)
+      create_file_processing_row(frm_process_body, filepath, bodies)
   
-  lbl_proc_id.pack(side=tk.LEFT)
-  lbl_proc_path.pack(side=tk.LEFT)
-  lbl_proc_description.pack(side=tk.LEFT)
-  lbl_proc_date.pack(side=tk.LEFT)
-  lbl_proc_status.pack(side=tk.RIGHT)
+  lbl_process_id.pack(side=tk.LEFT)
+  lbl_process_path.pack(side=tk.LEFT)
+  lbl_process_description.pack(side=tk.LEFT)
+  lbl_process_date.pack(side=tk.LEFT)
+  lbl_process_status.pack(side=tk.RIGHT)
 
-  btn_proc_res.pack()
+  btn_process_cancel.pack()
+  btn_process_res.pack()
 
-  frm_proc_header.grid(row=0, column=0, sticky='ew')
-  frm_proc_body.grid(row=1, column=0, sticky='nsew')
-  frm_proc_footer.grid(row=2, column=0, sticky='ew')
+  frm_process_header.grid(row=0, column=0, sticky='ew')
+  frm_process_body.grid(row=1, column=0, sticky='nsew')
+  frm_process_footer.grid(row=2, column=0, sticky='ew')
   processing_screen.pack()
 
   #for filepath in bodies.keys():
-  #  update_processing_status(filepath, "Falhou", bodies)
+  #  update_processessing_status(filepath, "Falhou", bodies)
 
   #process_all_dicom_files(app, save_path, bodies)
 ## results image and data preview screen
@@ -165,7 +169,7 @@ def results_screen(app, save_path, bodies):
 
   frm_result_body = tk.Frame(results_screen, bg='white', **paddings)
 
-  metrics = pd.read_csv(os.path.join(save_path, 'metrics', 'metrics.csv'), index_col='Patient ID')
+  metrics = pd.read_csv(os.path.join(save_path, 'metrics', 'metrics.csv'), index_col='File ')
   
   for filepath in bodies.keys():
     if (bodies[filepath]['status'].get()==strs["processing_status_success"]):
@@ -264,24 +268,24 @@ def create_results_frame(masterFrame, filepath, save_path, metrics):
   result_frm.pack()
 ## processing file row frame
 def create_file_processing_row(master, filepath: str, bodies: dict):
-  frm_proc_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
-  status_proc = tk.StringVar(frm_proc_body_row, strs["processing_status_ongoing"])
+  frm_process_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
+  status_process = tk.StringVar(frm_process_body_row, strs["processing_status_ongoing"])
   
-  bodies[filepath].update({'procframe': frm_proc_body_row, 'status': status_proc})
+  bodies[filepath].update({'procframe': frm_process_body_row, 'status': status_process})
 
-  lbl_proc_id = tk.Label(frm_proc_body_row, text=dicoms[filepath]['id'], width=10, bg='white', **paddings)
-  lbl_proc_file_path = tk.Label(frm_proc_body_row, text=filepath, width=70, bg='white', **paddings)
-  lbl_proc_description = tk.Label(frm_proc_body_row, text=dicoms[filepath]['description'], width=25, bg='white', **paddings)
-  lbl_proc_date = tk.Label(frm_proc_body_row, text=dicoms[filepath]['date'].date(), width=15, bg='white', **paddings)
-  lbl_proc_status = tk.Label(frm_proc_body_row, textvariable=status_proc, width=10, bg='white', name='statuslbl', **paddings)
+  lbl_process_id = tk.Label(frm_process_body_row, text=dicoms[filepath]['id'], width=10, bg='white', **paddings)
+  lbl_process_file_path = tk.Label(frm_process_body_row, text=filepath, width=70, bg='white', **paddings)
+  lbl_process_description = tk.Label(frm_process_body_row, text=dicoms[filepath]['description'], width=25, bg='white', **paddings)
+  lbl_process_date = tk.Label(frm_process_body_row, text=dicoms[filepath]['date'].date(), width=15, bg='white', **paddings)
+  lbl_process_status = tk.Label(frm_process_body_row, textvariable=status_process, width=10, bg='white', name='statuslbl', **paddings)
 
-  lbl_proc_id.pack(side=tk.LEFT)
-  lbl_proc_file_path.pack(side=tk.LEFT)
-  lbl_proc_status.pack(side=tk.RIGHT)
-  lbl_proc_date.pack(side=tk.RIGHT)
-  lbl_proc_description.pack(side=tk.LEFT)
+  lbl_process_id.pack(side=tk.LEFT)
+  lbl_process_file_path.pack(side=tk.LEFT)
+  lbl_process_status.pack(side=tk.RIGHT)
+  lbl_process_date.pack(side=tk.RIGHT)
+  lbl_process_description.pack(side=tk.LEFT)
 
-  frm_proc_body_row.pack(fill=tk.X)
+  frm_process_body_row.pack(fill=tk.X)
 ## selected files row frame
 def create_file_selection_row(master, filepath: str, bodies: dict):
   frm_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
@@ -336,14 +340,15 @@ def process_all_dicom_files(app, save_path, bodies):
       process_dicom(filepath, save_path)
       bodies[filepath]['status'].set(strs["processing_status_success"])
       bodies[filepath]['procframe'].pack()
-      tkm.showinfo("Concluído")
+      #tkm.showinfo("Concluído")
     except Exception as err:
       bodies[filepath]['status'].set(strs["processing_status_failed"])
       bodies[filepath]['procframe'].pack()
-      tkm.showinfo("Ouve um erro na identificação de vértebras.")
+      #tkm.showinfo("Ouve um erro na identificação de vértebras.")
       print(err)
 ## construct processing screen then start processing
 def init_processing(app, save_path, bodies):
-  processing_screen(app, save_path, bodies)
-  process_all_dicom_files(app, save_path, bodies)
+  inference_process = mp.Process(target=process_all_dicom_files, args=(app, save_path, bodies))
+  processing_screen(app, save_path, bodies, inference_process)
+  inference_process.start()
   return
