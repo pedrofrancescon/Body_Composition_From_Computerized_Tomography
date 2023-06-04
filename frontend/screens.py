@@ -8,7 +8,6 @@ from tkinter.filedialog import askdirectory
 from PIL import ImageTk, Image
 import pandas as pd
 import threading as th
-import multiprocessing as mp
 import os 
 ##### global vars #####
 ## styles
@@ -83,7 +82,7 @@ def file_path_selection_screen(app):
   lbl_save_path = tk.Label(frm_save_path, text=strs["save_path_select_title"], **basic_style, **paddings)
   ent_save_path = tk.Entry(frm_save_path, textvariable=txt_save_path, width=120, **basic_style)
   btn_save_path = tk.Button(frm_save_path, text=strs["save_path_select_button"], height=1, command=lambda:select_save_path(ent_save_path), **button_style, **paddings)
-  btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: init_processing(app, txt_save_path.get(), dicoms), **button_style, **paddings)
+  btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: processing_screen(app, txt_save_path.get(), dicoms), **button_style, **paddings)
   
   ## widgets placement
   lbl_explanation_row.pack(fill=tk.X)
@@ -107,7 +106,7 @@ def file_path_selection_screen(app):
   frm_footer.grid(row=2, column=0, sticky='ew')
   path_selection_screen.pack()
 ## processing status and files info screen
-def processing_screen(app, save_path: str, bodies: dict, inf_process):
+def processing_screen(app, save_path: str, bodies: dict):
   clear_window(app)
   #global processing_DICOM
   processing_screen = tk.Frame(app, bg='white')
@@ -127,8 +126,8 @@ def processing_screen(app, save_path: str, bodies: dict, inf_process):
   lbl_process_status = tk.Label(frm_process_header, text=strs["processing_status_header"], width=10, background='white', foreground='black', **paddings, **entry_font)
 
   frm_process_footer = tk.Frame(processing_screen, relief=tk.RAISED, bg='white')
-  btn_process_cancel = tk.Button(frm_process_footer, text=strs["processing_cancel_button"], command=lambda: inf_process.close(), border=1, relief=tk.RAISED, width=15, height=3, **basic_style)
-  btn_process_res = tk.Button(frm_process_footer, text=strs["processing_final_button"], command=lambda: results_screen(app, save_path, bodies), width=15, height=3, **button_style)
+  # btn_process_cancel = tk.Button(frm_process_footer, text=strs["processing_cancel_button"], command=lambda: inf_process.close(), border=1, relief=tk.RAISED, width=15, height=3, **basic_style)
+  btn_process_res = tk.Button(frm_process_footer, text=strs["processing_final_button"], command=lambda: results_screen(app, save_path, bodies), state=tk.DISABLED, width=15, height=3, **button_style)
 
   separator.pack(fill=tk.X)
 
@@ -141,7 +140,6 @@ def processing_screen(app, save_path: str, bodies: dict, inf_process):
   lbl_process_date.pack(side=tk.LEFT)
   lbl_process_status.pack(side=tk.RIGHT)
 
-  btn_process_cancel.pack()
   btn_process_res.pack()
 
   frm_process_header.grid(row=0, column=0, sticky='ew')
@@ -149,8 +147,10 @@ def processing_screen(app, save_path: str, bodies: dict, inf_process):
   frm_process_footer.grid(row=2, column=0, sticky='ew')
   processing_screen.pack()
 
-  #for filepath in bodies.keys():
-  #  update_processessing_status(filepath, "Falhou", bodies)
+  inference_thread = th.Thread(target=process_all_dicom_files, args=(app, save_path, bodies, btn_process_res))
+  inference_thread.start()
+
+  
 
   #process_all_dicom_files(app, save_path, bodies)
 ## results image and data preview screen
@@ -334,7 +334,7 @@ def clear_window(window):
   for widget in window.winfo_children():
     widget.destroy()
 ## delete actual frame on app window
-def process_all_dicom_files(app, save_path, bodies):
+def process_all_dicom_files(app, save_path, bodies, btn):
   for filepath in bodies.keys():
     try:
       process_dicom(filepath, save_path)
@@ -346,9 +346,4 @@ def process_all_dicom_files(app, save_path, bodies):
       bodies[filepath]['procframe'].pack()
       #tkm.showinfo("Ouve um erro na identificação de vértebras.")
       print(err)
-## construct processing screen then start processing
-def init_processing(app, save_path, bodies):
-  inference_process = mp.Process(target=process_all_dicom_files, args=(app, save_path, bodies))
-  processing_screen(app, save_path, bodies, inference_process)
-  inference_process.start()
-  return
+  btn['state']=tk.NORMAL
