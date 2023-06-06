@@ -19,7 +19,7 @@ positive_style = {'background': 'white', 'foreground': 'green', 'font': ('Calibr
 negative_style = {'background': 'white', 'foreground': 'red', 'font': ('Calibri', 12)}
 ## data structures
 dicoms = {}
-results_imgs = {}
+results_imgs = list()
 
 
 ##### create app window #####
@@ -168,12 +168,30 @@ def results_screen(app, save_path, bodies):
   lbl_result.pack()
 
   frm_result_body = tk.Frame(results_screen, bg='white', **paddings)
-
-  metrics = pd.read_csv(os.path.join(save_path, 'metrics', 'metrics.csv'), index_col='File ')
-  
+  # navigation between results
+  current_result_index=0
+  max_index=0
+  btn_previous_result = tk.Button(frm_result_body, text="<", height=3, 
+                                  command=lambda: show_result_frame(result_img_tbl_frame, results_imgs[keys[current_result_index-1]]),
+                                  name='btnprev', **button_style, **paddings)
+  btn_previous_result.pack(side=tk.LEFT)
+  btn_next_result = tk.Button(frm_result_body, text=">", height=3,
+                              command=lambda: show_result_frame(result_img_tbl_frame, results_imgs[keys[current_result_index+1]]),
+                              name='btnnext', **button_style, **paddings)
+  btn_next_result.pack(side=tk.RIGHT)
+  #load results metrics
+  metrics = pd.read_csv(os.path.join(save_path, 'metrics\\metrics.csv'), index_col='Patient ID')
+  #cria frames
   for filepath in bodies.keys():
     if (bodies[filepath]['status'].get()==strs["processing_status_success"]):
       create_results_frame(frm_result_body, filepath, save_path, metrics)
+  keys = list(results_imgs.keys())
+  num_results = len(keys)
+  update_buttons_state(frm_result_body, current_result_index, num_results)
+
+  #exibe frames um a um
+  results_imgs[keys[current_result_index]].pack()
+  
 
   
   frm_result_footer = tk.Frame(results_screen, relief=tk.RAISED, bg='white')
@@ -230,7 +248,7 @@ def create_results_frame(masterFrame, filepath, save_path, metrics):
   frm_result_data.rowconfigure(1, weight=1)
   frm_result_data.rowconfigure(2, weight=1)
 
-  cell_width=9
+  cell_width=8
   HU = tk.Label(frm_result_data, text=strs["results_metric_unit_hu"], width=cell_width, **basic_style) 
   HU.grid(row=1, column=0)
   cm2 = tk.Label(frm_result_data, text=strs["results_metric_unit_cm2"], width=cell_width, **basic_style) 
@@ -265,7 +283,7 @@ def create_results_frame(masterFrame, filepath, save_path, metrics):
   cm2_sat.grid(row=2, column=4)
 
   frm_result_data.pack(fill=tk.X)
-  result_frm.pack()
+  #result_frm.pack()
 ## processing file row frame
 def create_file_processing_row(master, filepath: str, bodies: dict):
   frm_process_body_row = tk.Frame(master, relief=tk.FLAT, bg='white', border=1,**paddings)
@@ -337,13 +355,35 @@ def clear_window(window):
 def process_all_dicom_files(app, save_path, bodies, btn):
   for filepath in bodies.keys():
     try:
-      process_dicom(filepath, save_path)
+      #process_dicom(filepath, save_path)
       bodies[filepath]['status'].set(strs["processing_status_success"])
       bodies[filepath]['procframe'].pack()
       #tkm.showinfo("Concluído")
     except Exception as err:
       bodies[filepath]['status'].set(strs["processing_status_failed"])
       bodies[filepath]['procframe'].pack()
-      #tkm.showinfo("Ouve um erro na identificação de vértebras.")
+      tkm.showinfo("Ouve um erro na identificação de vértebras.")
       print(err)
   btn['state']=tk.NORMAL
+#habilita desabilita botões
+def update_buttons_state(res_frm_body, current_index, num_results):
+  if (current_index==0):
+    res_frm_body['btnprev']['state']=tk.DISABLED
+  else:
+    res_frm_body['btnprev']['state']=tk.NORMAL
+  if(current_index==num_results-1):
+    res_frm_body['btnnext']['state']=tk.DISABLED
+  else:
+    res_frm_body['btnnext']['state']=tk.NORMAL
+  res_frm_body['btnprev'].pack(side=tk.LEFT)
+  res_frm_body['btnnext'].pack(side=tk.RIGHT)
+#show one result at time
+def show_result_frame(res_frm_body, next_result, current_index, num_results):
+    for widget in res_frm_body.winfo_children():
+      widget.pack_forget()
+    next_result.pack()
+    update_buttons_state(res_frm_body, current_index, num_results)
+def show_next(res_frm_body, next_result, current_index, num_results):
+  current_index=current_index+1;
+  show_result_frame(res_frm_body, next_result, current_index, num_results)
+ 
