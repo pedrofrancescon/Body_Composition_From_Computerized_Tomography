@@ -1,6 +1,6 @@
 ## strings used on all screens
 strs = {"home_title": "Identificação Automatizada Da Composição Corporal",
-          "home_description": "Selecione pastas contendo arquivos DICOM de exames tomográficos para determinação automatica da composição corporal dos pacientes",
+          "home_description": "Selecione pastas contendo arquivos DICOM de exames tomográficos \n para determinação automatica da composição corporal dos pacientes \n\n Melhores resultados com RAM de 16GB ou maior",
           "home_button": "Iniciar",
           "save_path_select_title": "Salvar em",
           "save_path_select_button": "Escolher",

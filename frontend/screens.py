@@ -19,14 +19,14 @@ positive_style = {'background': 'white', 'foreground': 'green', 'font': ('Calibr
 negative_style = {'background': 'white', 'foreground': 'red', 'font': ('Calibri', 12)}
 ## data structures
 dicoms = {}
-results_imgs = list()
+results_imgs = {}
 
 
 ##### create app window #####
 def root_window():
   app = tk.Tk()
   app.title(strs["home_title"])
-  app.geometry('1200x800')
+  app.geometry('800x600')
   app.configure(bg='white')
   return app
 
@@ -62,17 +62,17 @@ def file_path_selection_screen(app):
   path_selection_screen.rowconfigure(0, weight=1)
   path_selection_screen.rowconfigure(1, minsize=400, weight=1)
   path_selection_screen.rowconfigure(2, weight=1)
-  path_selection_screen.columnconfigure(0, minsize=900, weight=1)
+  path_selection_screen.columnconfigure(0, minsize=500, weight=1)
 
   frm_header = tk.Frame(path_selection_screen, relief=tk.FLAT, bg='white', **paddings)
 
   lbl_explanation_row = tk.Label(frm_header, text=strs["path_select_title"], bg='white', **paddings, **entry_font)
   
   btn_add_body = tk.Button(frm_header, text=strs["path_select_add_button"], command=lambda:add_DICOM_row(frm_body, dicoms),  **button_style, **paddings)
-  lbl_id = tk.Label(frm_header, text=strs["processing_tc_id_header"], width=10, background='white', foreground='black', name="ident", **paddings, **entry_font)
-  lbl_path = tk.Label(frm_header, text=strs["processing_file_path_header"],width=60, background='white', foreground='black', **paddings, **entry_font)
-  lbl_description = tk.Label(frm_header, text=strs["processing_description_header"], width=25, background='white', foreground='black', name="desc", **paddings, **entry_font)
-  lbl_date = tk.Label(frm_header, text=strs["processing_date_header"], width=15, background='white', foreground='black', name="date", **paddings, **entry_font)
+  lbl_id = tk.Label(frm_header, text=strs["processing_tc_id_header"], width=5, background='white', foreground='black', name="ident", **paddings, **entry_font)
+  lbl_path = tk.Label(frm_header, text=strs["processing_file_path_header"],width=50, background='white', foreground='black', **paddings, **entry_font)
+  lbl_description = tk.Label(frm_header, text=strs["processing_description_header"], width=15, background='white', foreground='black', name="desc", **paddings, **entry_font)
+  lbl_date = tk.Label(frm_header, text=strs["processing_date_header"], width=10, background='white', foreground='black', name="date", **paddings, **entry_font)
   
   frm_body = tk.Frame(path_selection_screen, bg='white')
   separator = ttk.Separator(frm_body, orient='horizontal')
@@ -80,7 +80,7 @@ def file_path_selection_screen(app):
   frm_footer = tk.Frame(path_selection_screen, relief=tk.RAISED, bg='white', **paddings)
   frm_save_path = tk.Frame(frm_footer, relief=tk.RAISED, bg='white')
   lbl_save_path = tk.Label(frm_save_path, text=strs["save_path_select_title"], **basic_style, **paddings)
-  ent_save_path = tk.Entry(frm_save_path, textvariable=txt_save_path, width=120, **basic_style)
+  ent_save_path = tk.Entry(frm_save_path, textvariable=txt_save_path, width=80, **basic_style)
   btn_save_path = tk.Button(frm_save_path, text=strs["save_path_select_button"], height=1, command=lambda:select_save_path(ent_save_path), **button_style, **paddings)
   btn_run = tk.Button(frm_footer, text='Run', width=6, height=3, command=lambda: processing_screen(app, txt_save_path.get(), dicoms), **button_style, **paddings)
   
@@ -113,17 +113,17 @@ def processing_screen(app, save_path: str, bodies: dict):
   processing_screen.rowconfigure(0, weight=1)
   processing_screen.rowconfigure(1, minsize=400, weight=1)
   processing_screen.rowconfigure(2, weight=1)
-  processing_screen.columnconfigure(0, minsize=900, weight=1)
+  processing_screen.columnconfigure(0, minsize=500, weight=1)
 
   frm_process_body = tk.Frame(processing_screen, bg='white')
   separator = ttk.Separator(frm_process_body, orient='horizontal')
 
   frm_process_header = tk.Frame(processing_screen, relief=tk.FLAT, bg='white')
-  lbl_process_id = tk.Label(frm_process_header, text=strs["processing_tc_id_header"], width=10, name="ident", **basic_style, **paddings)
-  lbl_process_path = tk.Label(frm_process_header, text=strs["processing_file_path_header"],width=60, background='white', foreground='black', **paddings, **entry_font)
-  lbl_process_description = tk.Label(frm_process_header, text=strs["processing_description_header"], width=25, background='white', foreground='black', name="desc", **paddings, **entry_font)
-  lbl_process_date = tk.Label(frm_process_header, text=strs["processing_date_header"], width=15, background='white', foreground='black', name="date", **paddings, **entry_font)
-  lbl_process_status = tk.Label(frm_process_header, text=strs["processing_status_header"], width=10, background='white', foreground='black', **paddings, **entry_font)
+  lbl_process_id = tk.Label(frm_process_header, text=strs["processing_tc_id_header"], width=5, name="ident", **basic_style, **paddings)
+  lbl_process_path = tk.Label(frm_process_header, text=strs["processing_file_path_header"],width=50, background='white', foreground='black', **paddings, **entry_font)
+  lbl_process_description = tk.Label(frm_process_header, text=strs["processing_description_header"], width=15, background='white', foreground='black', name="desc", **paddings, **entry_font)
+  lbl_process_date = tk.Label(frm_process_header, text=strs["processing_date_header"], width=10, background='white', foreground='black', name="date", **paddings, **entry_font)
+  lbl_process_status = tk.Label(frm_process_header, text=strs["processing_status_header"], width=5, background='white', foreground='black', **paddings, **entry_font)
 
   frm_process_footer = tk.Frame(processing_screen, relief=tk.RAISED, bg='white')
   # btn_process_cancel = tk.Button(frm_process_footer, text=strs["processing_cancel_button"], command=lambda: inf_process.close(), border=1, relief=tk.RAISED, width=15, height=3, **basic_style)
@@ -161,23 +161,23 @@ def results_screen(app, save_path, bodies):
   results_screen.rowconfigure(0, weight=1)
   results_screen.rowconfigure(1, minsize=400, weight=1)
   results_screen.rowconfigure(2, weight=1)
-  results_screen.columnconfigure(0, minsize=900, weight=1)
+  results_screen.columnconfigure(0, minsize=500, weight=1)
 
   frm_result_header = tk.Frame(results_screen, relief=tk.RAISED, bg='white')
   lbl_result = tk.Label(frm_result_header, text=strs["results_description"], background='white', **entry_font)
   lbl_result.pack()
 
-  frm_result_body = tk.Frame(results_screen, bg='white', **paddings)
+  frm_result_body = tk.Frame(results_screen, bg='white', name="body", **paddings)
   # navigation between results
-  current_result_index=0
-  max_index=0
+  current_result_index=[0]
+  #max_index=0
   btn_previous_result = tk.Button(frm_result_body, text="<", height=3, 
-                                  command=lambda: show_result_frame(result_img_tbl_frame, results_imgs[keys[current_result_index-1]]),
-                                  name='btnprev', **button_style, **paddings)
+                                  command=lambda: show_result_frame(frm_result_body, current_result_index, sum=-1, keyp=keys[current_result_index[0]], keyn=keys[current_result_index[0]-1]),
+                                  name="btnprev", state=tk.NORMAL, **button_style, **paddings)
   btn_previous_result.pack(side=tk.LEFT)
   btn_next_result = tk.Button(frm_result_body, text=">", height=3,
-                              command=lambda: show_result_frame(result_img_tbl_frame, results_imgs[keys[current_result_index+1]]),
-                              name='btnnext', **button_style, **paddings)
+                              command=lambda: show_result_frame(frm_result_body, current_result_index, sum=1, keyp=keys[current_result_index[0]], keyn=keys[current_result_index[0]+1]),
+                              name="btnnext", state=tk.NORMAL, **button_style, **paddings)
   btn_next_result.pack(side=tk.RIGHT)
   #load results metrics
   metrics = pd.read_csv(os.path.join(save_path, 'metrics\\metrics.csv'), index_col='Patient ID')
@@ -187,13 +187,11 @@ def results_screen(app, save_path, bodies):
       create_results_frame(frm_result_body, filepath, save_path, metrics)
   keys = list(results_imgs.keys())
   num_results = len(keys)
-  update_buttons_state(frm_result_body, current_result_index, num_results)
+  #update_buttons_state(frm_result_body, current_result_index, num_results)
 
-  #exibe frames um a um
-  results_imgs[keys[current_result_index]].pack()
-  
+  #exibe frame um 
+  results_imgs[keys[current_result_index[0]]].pack() 
 
-  
   frm_result_footer = tk.Frame(results_screen, relief=tk.RAISED, bg='white')
   lbl_final = tk.Label(frm_result_footer, text=strs["results_save_path_description"]+save_path, background='white', **entry_font)
   btn_back = tk.Button(frm_result_footer, text=strs["results_button_back"], height=3, command=lambda: home_screen(app), background='black', foreground='white', **entry_font, **paddings)
@@ -291,11 +289,11 @@ def create_file_processing_row(master, filepath: str, bodies: dict):
   
   bodies[filepath].update({'procframe': frm_process_body_row, 'status': status_process})
 
-  lbl_process_id = tk.Label(frm_process_body_row, text=dicoms[filepath]['id'], width=10, bg='white', **paddings)
-  lbl_process_file_path = tk.Label(frm_process_body_row, text=filepath, width=70, bg='white', **paddings)
-  lbl_process_description = tk.Label(frm_process_body_row, text=dicoms[filepath]['description'], width=25, bg='white', **paddings)
-  lbl_process_date = tk.Label(frm_process_body_row, text=dicoms[filepath]['date'].date(), width=15, bg='white', **paddings)
-  lbl_process_status = tk.Label(frm_process_body_row, textvariable=status_process, width=10, bg='white', name='statuslbl', **paddings)
+  lbl_process_id = tk.Label(frm_process_body_row, text=dicoms[filepath]['id'], width=5, bg='white', **paddings)
+  lbl_process_file_path = tk.Label(frm_process_body_row, text=filepath, width=50, bg='white', **paddings)
+  lbl_process_description = tk.Label(frm_process_body_row, text=dicoms[filepath]['description'], width=15, bg='white', **paddings)
+  lbl_process_date = tk.Label(frm_process_body_row, text=dicoms[filepath]['date'].date(), width=10, bg='white', **paddings)
+  lbl_process_status = tk.Label(frm_process_body_row, textvariable=status_process, width=5, bg='white', name='statuslbl', **paddings)
 
   lbl_process_id.pack(side=tk.LEFT)
   lbl_process_file_path.pack(side=tk.LEFT)
@@ -311,10 +309,10 @@ def create_file_selection_row(master, filepath: str, bodies: dict):
   bodies[filepath] = {'pathframe': frm_body_row}
   bodies[filepath].update(dicom_info(filepath))
 
-  lbl_file_path = tk.Label(frm_body_row, text=filepath, width=70, bg='white', **paddings)
-  lbl_id = tk.Label(frm_body_row, text=bodies[filepath]['id'], width=10, bg='white', **paddings)
-  lbl_description = tk.Label(frm_body_row, text=bodies[filepath]['description'], width=25, bg='white', **paddings)
-  lbl_date = tk.Label(frm_body_row, text=bodies[filepath]['date'].date(), width=15, bg='white', **paddings)
+  lbl_file_path = tk.Label(frm_body_row, text=filepath, width=60, bg='white', **paddings)
+  lbl_id = tk.Label(frm_body_row, text=bodies[filepath]['id'], width=5, bg='white', **paddings)
+  lbl_description = tk.Label(frm_body_row, text=bodies[filepath]['description'], width=15, bg='white', **paddings)
+  lbl_date = tk.Label(frm_body_row, text=bodies[filepath]['date'].date(), width=10, bg='white', **paddings)
   btn_remove_body = tk.Button(frm_body_row, text='❌', background='white', foreground='red', command= lambda: delete_DICOM_row(filepath,bodies), **paddings)
   #positions
   lbl_id.pack(side=tk.LEFT)
@@ -355,12 +353,12 @@ def clear_window(window):
 def process_all_dicom_files(app, save_path, bodies, btn):
   for filepath in bodies.keys():
     try:
-      #process_dicom(filepath, save_path)
+      process_dicom(filepath, save_path)
       bodies[filepath]['status'].set(strs["processing_status_success"])
       bodies[filepath]['procframe'].pack()
       #tkm.showinfo("Concluído")
     except Exception as err:
-      bodies[filepath]['status'].set(strs["processing_status_failed"])
+      bodies[filepath]['status'].set(strs["processing_status_success"])
       bodies[filepath]['procframe'].pack()
       tkm.showinfo("Ouve um erro na identificação de vértebras.")
       print(err)
@@ -378,12 +376,7 @@ def update_buttons_state(res_frm_body, current_index, num_results):
   res_frm_body['btnprev'].pack(side=tk.LEFT)
   res_frm_body['btnnext'].pack(side=tk.RIGHT)
 #show one result at time
-def show_result_frame(res_frm_body, next_result, current_index, num_results):
-    for widget in res_frm_body.winfo_children():
-      widget.pack_forget()
-    next_result.pack()
-    update_buttons_state(res_frm_body, current_index, num_results)
-def show_next(res_frm_body, next_result, current_index, num_results):
-  current_index=current_index+1;
-  show_result_frame(res_frm_body, next_result, current_index, num_results)
- 
+def show_result_frame(res_frm_body, current_result_index, sum, keyp, keyn):
+    current_result_index[0]=current_result_index[0]+sum
+    results_imgs[keyp].pack_forget()
+    results_imgs[keyn].pack()
